@@ -9,6 +9,7 @@ type azalia struct {
 }
 
 func (i azalia) Scan(ctx Context, addr PCIDevData) {
+	fmt.Printf("Azalia\n")
 	az := Create(ctx, "hda_verb.c")
 	defer az.Close()
 
@@ -61,4 +62,6 @@ func init() {
 	RegisterPCI(0x8086, 0x1c20, azalia{})
 	/* C216/ivybridge */
 	RegisterPCI(0x8086, 0x1e20, azalia{})
+	/* C216/tigerlake */
+	RegisterPCI(0x8086, 0xa0c8, azalia{})
 }
