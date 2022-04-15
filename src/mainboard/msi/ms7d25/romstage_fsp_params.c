@@ -50,7 +50,19 @@ static const struct mem_spd dimm_module_spd_info = {
 
 void mainboard_memory_init_params(FSPM_UPD *memupd)
 {
+
 	memupd->FspmConfig.FirstDimmBitMask = 0xA;
+	//TODO: Enable CLKREQ messaging when it starts to work
+	memupd->FspmConfig.CpuPcieRpClockReqMsgEnable[0] = 0;
+	memupd->FspmConfig.CpuPcieRpClockReqMsgEnable[1] = 0;
+	memupd->FspmConfig.BoardGpioTablePreMemAddress = 0;
+	memupd->FspmConfig.DmiMaxLinkSpeed = 4; // Gen4 speed, undocumented
+	memupd->FspmConfig.SkipExtGfxScan = 0;
+
+	memupd->FspmConfig.PchHdaAudioLinkHdaEnable = 1;
+	memupd->FspmConfig.PchHdaSdiEnable[0] = 1;
+
+	memupd->FspmConfig.CnviDdrRfim = 1;
 
 	memcfg_init(memupd, &ddr4_mem_config, &dimm_module_spd_info, false);
 }
