@@ -1,8 +1,11 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 
+#include <arch/mmio.h>
 #include <soc/pci_devs.h>
 #include <device/pci_ops.h>
 #include <console/console.h>
+#include <security/intel/txt/txt_register.h>
+#include <stdint.h>
 
 #include "ptt.h"
 
@@ -27,6 +30,13 @@ static uint32_t read_register(int reg_addr)
  */
 bool ptt_active(void)
 {
+	uint32_t ver_ftif = read32((void *)TXT_STS_FTIF);
+
+	if (ver_ftif != 0 && ver_ftif != UINT32_MAX) {
+		if ((ver_ftif & TXT_PTT_PRESENT) == TXT_PTT_PRESENT)
+			return true;
+	}
+
 	uint32_t fwsts4 = read_register(PCI_ME_HFSTS4);
 
 	if (fwsts4 == 0xFFFFFFFF)
