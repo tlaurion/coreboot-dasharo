@@ -4,6 +4,7 @@
 #include <soc/pci_devs.h>
 #include <device/pci_ops.h>
 #include <console/console.h>
+#include <drivers/crb/tpm.h>
 #include <security/intel/txt/txt_register.h>
 #include <stdint.h>
 
@@ -11,6 +12,10 @@
 
 #define PCI_ME_HFSTS4 0x64
 #define PTT_ENABLE (1 << 19)
+
+#define PTT_CRB_DATA_BUFFER 0x80
+/* Max bytes from PTT_CRB_DATA_BUFFER, 0xFED40080 - 0xFED40FFF = 3968 Bytes */
+#define PTT_CRB_LENGTH 3968
 
 /* Dump Intel ME register */
 static uint32_t read_register(int reg_addr)
@@ -48,4 +53,26 @@ bool ptt_active(void)
 	}
 
 	return true;
+}
+
+/*
+ * ptt_init
+ *
+ * Initializes the CRB Control Area for PTT.
+ *
+ * The Command and response address/size must be initialized first. Not all
+ * platforms/FSPs do it.
+ */
+void ptt_init(void)
+{
+	write32(CRB_REG(0, CRB_REG_CMD_SIZE), PTT_CRB_LENGTH);
+	write64(CRB_REG(0, CRB_REG_CMD_ADDR), TPM_CRB_BASE_ADDRESS + PTT_CRB_DATA_BUFFER);
+	write32(CRB_REG(0, CRB_REG_RESP_SIZE), PTT_CRB_LENGTH);
+	write64(CRB_REG(0, CRB_REG_RESP_ADDR), TPM_CRB_BASE_ADDRESS + PTT_CRB_DATA_BUFFER);
+
+	printk(BIOS_DEBUG, "PTT Control Area:\n");
+	printk(BIOS_DEBUG, "\tCommand size: 0x%x\n", read32(CRB_REG(0, CRB_REG_CMD_SIZE)));
+	printk(BIOS_DEBUG, "\tCommand addr: 0x%llx\n", read64(CRB_REG(0, CRB_REG_CMD_ADDR)));
+	printk(BIOS_DEBUG, "\tResponse size: 0x%x\n", read32(CRB_REG(0, CRB_REG_RESP_SIZE)));
+	printk(BIOS_DEBUG, "\tResponse addr: 0x%llx\n", read64(CRB_REG(0, CRB_REG_RESP_ADDR)));
 }

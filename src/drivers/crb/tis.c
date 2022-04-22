@@ -43,6 +43,7 @@ int tis_open(void)
 			return -1;
 		}
 		printk(BIOS_DEBUG, "%s: Intel PTT is active.\n", __func__);
+		ptt_init();
 	}
 
 	return 0;

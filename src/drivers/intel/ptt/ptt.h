@@ -15,3 +15,9 @@
  * false otherwise.
  */
 bool ptt_active(void);
+/*
+ * ptt_init
+ *
+ * Initializes the CRB Control Area for PTT.
+ */
+void ptt_init(void);
