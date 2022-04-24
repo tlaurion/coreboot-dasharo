@@ -37,6 +37,9 @@ void mainboard_silicon_init_params(FSP_S_CONFIG *params)
 	params->CnviWifiCore = 1;
 	params->CpuPcieFiaProgramming = 1;
 
+	params->PcieRpFunctionSwap = 0;
+	params->CpuPcieRpFunctionSwap = 0;
+
 	params->CpuPcieRpSlotImplemented[0] = 1; // M2_1
 	params->CpuPcieRpSlotImplemented[1] = 1; // PCI_E1
 	params->PcieRpSlotImplemented[0]    = 1; // PCI_E2
@@ -45,6 +48,26 @@ void mainboard_silicon_init_params(FSP_S_CONFIG *params)
 	params->PcieRpSlotImplemented[8]    = 1; // M2_3
 	params->PcieRpSlotImplemented[20]   = 1; // M2_4
 	params->PcieRpSlotImplemented[24]   = 1; // M2_2
+
+	params->CpuPcieRpPmSci[0] = 1; // M2_1
+	params->CpuPcieRpPmSci[1] = 1; // PCI_E1
+	params->PcieRpPmSci[0]    = 1; // PCI_E2
+	params->PcieRpPmSci[1]    = 1; // PCI_E4
+	params->PcieRpPmSci[2]    = 1; // Ethernet
+	params->PcieRpPmSci[4]    = 1; // PCI_E3
+	params->PcieRpPmSci[8]    = 1; // M2_3
+	params->PcieRpPmSci[20]   = 1; // M2_4
+	params->PcieRpPmSci[24]   = 1; // M2_2
+
+	params->CpuPcieRpTransmitterHalfSwing[0] = 1; // M2_1
+	params->CpuPcieRpTransmitterHalfSwing[1] = 1; // PCI_E1
+	params->PcieRpTransmitterHalfSwing[0]    = 1; // PCI_E2
+	params->PcieRpTransmitterHalfSwing[1]    = 1; // PCI_E4
+	params->PcieRpTransmitterHalfSwing[2]    = 1; // Ethernet
+	params->PcieRpTransmitterHalfSwing[4]    = 1; // PCI_E3
+	params->PcieRpTransmitterHalfSwing[8]    = 1; // M2_3
+	params->PcieRpTransmitterHalfSwing[20]   = 1; // M2_4
+	params->PcieRpTransmitterHalfSwing[24]   = 1; // M2_2
 
 	params->PcieRpEnableCpm[0]    = 1; // PCI_E2
 	params->PcieRpEnableCpm[1]    = 1; // PCI_E4
@@ -77,6 +100,10 @@ void mainboard_silicon_init_params(FSP_S_CONFIG *params)
 	params->CpuPcieRpPeerToPeerMode[1] = 1;
 	params->CpuPcieRpMaxPayload[1] = 1; // 256B
 	params->CpuPcieRpAcsEnabled[1] = 1;
+
+	params->SataPortsSolidStateDrive[6] = 1; // M2_3
+	params->SataPortsSolidStateDrive[7] = 1; // M2_4
+	params->SataLedEnable = 1;
 }
 
 struct chip_operations mainboard_ops = {

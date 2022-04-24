@@ -64,8 +64,5 @@ void mainboard_memory_init_params(FSPM_UPD *memupd)
 
 	memupd->FspmConfig.CnviDdrRfim = 1;
 
-	memupd->FspmConfig.BclkSource = 3;
-	memupd->FspmConfig.CpuBclkOcFrequency = 0;
-
 	memcfg_init(memupd, &ddr4_mem_config, &dimm_module_spd_info, false);
 }
