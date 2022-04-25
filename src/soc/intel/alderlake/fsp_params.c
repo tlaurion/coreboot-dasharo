@@ -765,6 +765,8 @@ static void fill_fsps_misc_power_params(FSP_S_CONFIG *s_cfg,
 	for (size_t i = 0; i < ARRAY_SIZE(config->domain_vr_config); i++)
 		fill_vr_domain_config(s_cfg, i, &config->domain_vr_config[i]);
 
+	fill_vr_pd_design_config(s_cfg);
+
 	s_cfg->PmcLpmS0ixSubStateEnableMask = get_supported_lpm_mask();
 
 	/* Apply minimum assertion width settings */

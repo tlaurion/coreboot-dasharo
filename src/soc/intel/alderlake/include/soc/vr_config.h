@@ -68,4 +68,5 @@ enum vr_domain {
 	}
 
 void fill_vr_domain_config(FSP_S_CONFIG *s_cfg, int domain, const struct vr_config *cfg);
+void fill_vr_pd_design_config(FSP_S_CONFIG *s_cfg);
 #endif

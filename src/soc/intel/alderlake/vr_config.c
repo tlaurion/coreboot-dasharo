@@ -44,6 +44,25 @@ struct vr_lookup {
 	uint32_t conf[NUM_VR_DOMAINS];
 };
 
+struct vr_pd_lookup {
+	uint16_t mchid;
+	uint8_t tdp;
+	uint8_t vr_pd_design;
+};
+
+enum vr_power_delviery_design {
+	ADL_S_35W_8_8 = 1,
+	ADL_S_65W_8_8 = 2,
+	ADL_S_125W_8_8 = 3,
+	ADL_S_150W_8_8 = 4,
+	ADL_S_35W_8_4 = 5,
+	ADL_S_65W_8_4 = 6,
+	ADL_S_125W_8_4 = 7,
+	ADL_S_125W_6_4 = 8,
+	ADL_S_35W_6_0 = 9,
+	ADL_S_65W_6_0 = 10,
+};
+
 static uint32_t load_table(const struct vr_lookup *tbl, const int tbl_entries, const int domain,
 					const uint16_t mch_id, uint8_t tdp)
 {
@@ -69,6 +88,16 @@ static const struct vr_lookup vr_config_ll[] = {
 	{ PCI_DID_INTEL_ADL_P_ID_6, 15, VR_CFG_ALL_DOMAINS_LOADLINE(2.8, 3.2) },
 	{ PCI_DID_INTEL_ADL_P_ID_7, 15, VR_CFG_ALL_DOMAINS_LOADLINE(2.8, 3.2) },
 	{ PCI_DID_INTEL_ADL_P_ID_10, 15, VR_CFG_ALL_DOMAINS_LOADLINE(2.8, 3.2) },
+	{ PCI_DID_INTEL_ADL_S_ID_1,  125, VR_CFG_ALL_DOMAINS_LOADLINE(1.1, 4.0) },
+	{ PCI_DID_INTEL_ADL_S_ID_1,  65,  VR_CFG_ALL_DOMAINS_LOADLINE(1.1, 4.0) },
+	{ PCI_DID_INTEL_ADL_S_ID_1,  35,  VR_CFG_ALL_DOMAINS_LOADLINE(1.7, 4.0) },
+	{ PCI_DID_INTEL_ADL_S_ID_3,  125, VR_CFG_ALL_DOMAINS_LOADLINE(1.1, 4.0) },
+	{ PCI_DID_INTEL_ADL_S_ID_3,  65,  VR_CFG_ALL_DOMAINS_LOADLINE(1.1, 4.0) },
+	{ PCI_DID_INTEL_ADL_S_ID_3,  35,  VR_CFG_ALL_DOMAINS_LOADLINE(1.7, 4.0) },
+	{ PCI_DID_INTEL_ADL_S_ID_8,  125, VR_CFG_ALL_DOMAINS_LOADLINE(1.7, 4.0) },
+	{ PCI_DID_INTEL_ADL_S_ID_10, 65,  VR_CFG_ALL_DOMAINS_LOADLINE(1.7, 4.0) },
+	{ PCI_DID_INTEL_ADL_S_ID_10, 35,  VR_CFG_ALL_DOMAINS_LOADLINE(1.7, 4.0) },
+
 };
 
 static const struct vr_lookup vr_config_icc[] = {
@@ -82,6 +111,15 @@ static const struct vr_lookup vr_config_icc[] = {
 	{ PCI_DID_INTEL_ADL_P_ID_6, 15, VR_CFG_ALL_DOMAINS_ICC(80, 40) },
 	{ PCI_DID_INTEL_ADL_P_ID_7, 15, VR_CFG_ALL_DOMAINS_ICC(80, 40) },
 	{ PCI_DID_INTEL_ADL_P_ID_10, 15, VR_CFG_ALL_DOMAINS_ICC(80, 40) },
+	{ PCI_DID_INTEL_ADL_S_ID_1,  125, VR_CFG_ALL_DOMAINS_ICC(280, 30) },
+	{ PCI_DID_INTEL_ADL_S_ID_1,  65,  VR_CFG_ALL_DOMAINS_ICC(240, 30) },
+	{ PCI_DID_INTEL_ADL_S_ID_1,  35,  VR_CFG_ALL_DOMAINS_ICC(154, 30) },
+	{ PCI_DID_INTEL_ADL_S_ID_3,  125, VR_CFG_ALL_DOMAINS_ICC(240, 30) },
+	{ PCI_DID_INTEL_ADL_S_ID_3,  65,  VR_CFG_ALL_DOMAINS_ICC(220, 30) },
+	{ PCI_DID_INTEL_ADL_S_ID_3,  35,  VR_CFG_ALL_DOMAINS_ICC(145, 30) },
+	{ PCI_DID_INTEL_ADL_S_ID_8,  125, VR_CFG_ALL_DOMAINS_ICC(175, 30) },
+	{ PCI_DID_INTEL_ADL_S_ID_10, 65,  VR_CFG_ALL_DOMAINS_ICC(175, 30) },
+	{ PCI_DID_INTEL_ADL_S_ID_10, 35,  VR_CFG_ALL_DOMAINS_ICC(100, 30) },
 };
 
 static const struct vr_lookup vr_config_tdc_timewindow[] = {
@@ -95,6 +133,15 @@ static const struct vr_lookup vr_config_tdc_timewindow[] = {
 	{ PCI_DID_INTEL_ADL_P_ID_6, 15, VR_CFG_ALL_DOMAINS_TDC(28000, 28000) },
 	{ PCI_DID_INTEL_ADL_P_ID_7, 15, VR_CFG_ALL_DOMAINS_TDC(28000, 28000) },
 	{ PCI_DID_INTEL_ADL_P_ID_10, 15, VR_CFG_ALL_DOMAINS_TDC(28000, 28000) },
+	{ PCI_DID_INTEL_ADL_S_ID_1,  125, VR_CFG_ALL_DOMAINS_TDC(56000, 56000) },
+	{ PCI_DID_INTEL_ADL_S_ID_1,  65,  VR_CFG_ALL_DOMAINS_TDC(56000, 56000) },
+	{ PCI_DID_INTEL_ADL_S_ID_1,  35,  VR_CFG_ALL_DOMAINS_TDC(56000, 56000) },
+	{ PCI_DID_INTEL_ADL_S_ID_3,  125, VR_CFG_ALL_DOMAINS_TDC(56000, 56000) },
+	{ PCI_DID_INTEL_ADL_S_ID_3,  65,  VR_CFG_ALL_DOMAINS_TDC(56000, 56000) },
+	{ PCI_DID_INTEL_ADL_S_ID_3,  35,  VR_CFG_ALL_DOMAINS_TDC(56000, 56000) },
+	{ PCI_DID_INTEL_ADL_S_ID_8,  125, VR_CFG_ALL_DOMAINS_TDC(56000, 56000) },
+	{ PCI_DID_INTEL_ADL_S_ID_10, 65,  VR_CFG_ALL_DOMAINS_TDC(56000, 56000) },
+	{ PCI_DID_INTEL_ADL_S_ID_10, 35,  VR_CFG_ALL_DOMAINS_TDC(56000, 56000) },
 };
 
 static const struct vr_lookup vr_config_tdc_currentlimit[] = {
@@ -108,7 +155,56 @@ static const struct vr_lookup vr_config_tdc_currentlimit[] = {
 	{ PCI_DID_INTEL_ADL_P_ID_6, 15, VR_CFG_ALL_DOMAINS_TDC_CURRENT(20, 20) },
 	{ PCI_DID_INTEL_ADL_P_ID_7, 15, VR_CFG_ALL_DOMAINS_TDC_CURRENT(20, 20) },
 	{ PCI_DID_INTEL_ADL_P_ID_10, 15, VR_CFG_ALL_DOMAINS_TDC_CURRENT(20, 20) },
+	{ PCI_DID_INTEL_ADL_S_ID_1,  125, VR_CFG_ALL_DOMAINS_TDC_CURRENT(132, 132) },
+	{ PCI_DID_INTEL_ADL_S_ID_1,  65,  VR_CFG_ALL_DOMAINS_TDC_CURRENT(89, 89) },
+	{ PCI_DID_INTEL_ADL_S_ID_1,  35,  VR_CFG_ALL_DOMAINS_TDC_CURRENT(56, 56) },
+	{ PCI_DID_INTEL_ADL_S_ID_3,  125, VR_CFG_ALL_DOMAINS_TDC_CURRENT(109, 109) },
+	{ PCI_DID_INTEL_ADL_S_ID_3,  65,  VR_CFG_ALL_DOMAINS_TDC_CURRENT(77, 77) },
+	{ PCI_DID_INTEL_ADL_S_ID_3,  35,  VR_CFG_ALL_DOMAINS_TDC_CURRENT(49, 49) },
+	{ PCI_DID_INTEL_ADL_S_ID_8,  125, VR_CFG_ALL_DOMAINS_TDC_CURRENT(96, 96) },
+	{ PCI_DID_INTEL_ADL_S_ID_10, 65,  VR_CFG_ALL_DOMAINS_TDC_CURRENT(66, 66) },
+	{ PCI_DID_INTEL_ADL_S_ID_10, 35,  VR_CFG_ALL_DOMAINS_TDC_CURRENT(44, 44) },
 };
+
+static const struct vr_pd_lookup vr_config_pd_design[] = {
+	{ PCI_DID_INTEL_ADL_S_ID_1,  35,  ADL_S_35W_8_8 },
+	{ PCI_DID_INTEL_ADL_S_ID_1,  65,  ADL_S_65W_8_8 },
+	{ PCI_DID_INTEL_ADL_S_ID_1,  125, ADL_S_125W_8_8 },
+	{ PCI_DID_INTEL_ADL_S_ID_1,  150, ADL_S_150W_8_8 },
+	{ PCI_DID_INTEL_ADL_S_ID_3,  35,  ADL_S_35W_8_4 },
+	{ PCI_DID_INTEL_ADL_S_ID_3,  65,  ADL_S_65W_8_4 },
+	{ PCI_DID_INTEL_ADL_S_ID_3,  125, ADL_S_125W_8_4 },
+	{ PCI_DID_INTEL_ADL_S_ID_8,  125, ADL_S_125W_6_4 },
+	{ PCI_DID_INTEL_ADL_S_ID_10, 35,  ADL_S_35W_6_0 },
+	{ PCI_DID_INTEL_ADL_S_ID_10, 65,  ADL_S_65W_6_0 },
+};
+
+void fill_vr_pd_design_config(FSP_S_CONFIG *s_cfg)
+{
+	uint16_t mch_id = 0;
+	uint8_t tdp = get_cpu_tdp();
+	uint8_t vr_pd_design = 0; // 0 means Auto
+
+	if (!mch_id) {
+		struct device *dev = pcidev_path_on_root(SA_DEVFN_ROOT);
+		mch_id = dev ? pci_read_config16(dev, PCI_DEVICE_ID) : 0xffff;
+	}
+
+	for (size_t i = 0; i < ARRAY_SIZE(vr_config_pd_design); i++) {
+		if (vr_config_pd_design[i].mchid != mch_id ||
+		    vr_config_pd_design[i].tdp != tdp)
+			continue;
+		vr_pd_design = vr_config_pd_design[i].vr_pd_design;
+	}
+
+	if (vr_pd_design == 0) {
+		printk(BIOS_ERR, "Unknown MCH (0x%x) in %s."
+				 " Skipping VrPowerDeliveryDesign config\n",
+				 mch_id, __func__);
+	}
+
+	s_cfg->VrPowerDeliveryDesign = vr_pd_design;
+}
 
 void fill_vr_domain_config(FSP_S_CONFIG *s_cfg,
 		int domain, const struct vr_config *chip_cfg)
