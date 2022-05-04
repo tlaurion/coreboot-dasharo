@@ -84,6 +84,13 @@ chip soc/intel/alderlake
 	register "hybrid_storage_mode" = "1"
 	register "dmi_power_optimize_disable" = "1"
 
+	# FIVR configuration
+	register "fivr_rfi_frequency" = "1394"
+	register "fivr_spread_spectrum" = "FIVR_SS_1_5"
+	register "ext_fivr_settings" = "{
+		.configure_ext_fivr = 1,
+	}"
+
 	#FIXME: check if this is used by CPU RP2
 	register "pcie_clk_config_flag[11]" = "PCIE_CLK_FREE_RUNNING"
 	register "pcie_clk_config_flag[16]" = "PCIE_CLK_FREE_RUNNING"
