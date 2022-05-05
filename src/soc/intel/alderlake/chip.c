@@ -12,6 +12,7 @@
 #include <intelblocks/itss.h>
 #include <intelblocks/pcie_rp.h>
 #include <intelblocks/xdci.h>
+#include <soc/hsphy.h>
 #include <soc/intel/common/vbt.h>
 #include <soc/itss.h>
 #include <soc/pci_devs.h>
@@ -166,6 +167,9 @@ static void soc_fill_gpio_pm_configuration(void)
 
 void soc_init_pre_device(void *chip_info)
 {
+	if (CONFIG(SOC_INTEL_ALDERLAKE_PCH_S))
+		load_and_init_hsphy();
+
 	/* Perform silicon specific init. */
 	fsp_silicon_init();
 
