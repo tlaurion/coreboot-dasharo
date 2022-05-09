@@ -105,6 +105,51 @@ chip soc/intel/apollolake
 	register "usb3_port[4]" = "PORT_DIS"
 	register "usb3_port[5]" = "PORT_DIS"
 
+	# Override USB2 PER PORT register (PORT 0)
+	register "usb2eye[0]" = "{
+		.Usb20OverrideEn = 1,
+		.Usb20PerPortPeTxiSet = 5,
+		.Usb20PerPortTxiSet = 1,
+		.Usb20IUsbTxEmphasisEn = 3,
+		.Usb20PerPortTxPeHalf = 1,
+	}"
+
+	# Override USB2 PER PORT register (PORT 1)
+	register "usb2eye[1]" = "{
+		.Usb20OverrideEn = 1,
+		.Usb20PerPortPeTxiSet = 0,
+		.Usb20PerPortTxiSet = 3,
+		.Usb20IUsbTxEmphasisEn = 1,
+		.Usb20PerPortTxPeHalf = 1,
+	}"
+
+	# Override USB2 PER PORT register (PORT 2)
+	register "usb2eye[2]" = "{
+		.Usb20OverrideEn = 1,
+		.Usb20PerPortPeTxiSet = 1,
+		.Usb20PerPortTxiSet = 0,
+		.Usb20IUsbTxEmphasisEn = 3,
+		.Usb20PerPortTxPeHalf = 0,
+	}"
+
+	# Override USB2 PER PORT register (PORT 3)
+	register "usb2eye[3]" = "{
+		.Usb20OverrideEn = 1,
+		.Usb20PerPortPeTxiSet = 5,
+		.Usb20PerPortTxiSet = 0,
+		.Usb20IUsbTxEmphasisEn = 3,
+		.Usb20PerPortTxPeHalf = 0,
+	}"
+
+	# Override USB2 PER PORT register (PORT 4)
+	register "usb2eye[4]" = "{
+		.Usb20OverrideEn = 1,
+		.Usb20PerPortPeTxiSet = 5,
+		.Usb20PerPortTxiSet = 0,
+		.Usb20IUsbTxEmphasisEn = 3,
+		.Usb20PerPortTxPeHalf = 0,
+	}"
+
 	device cpu_cluster 0 on
 		device lapic 0 on end
 	end
