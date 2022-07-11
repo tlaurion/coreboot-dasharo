@@ -29,7 +29,7 @@ static void mainboard_init(void *chip_info)
 	gpio_configure_pads(pads, num);
 
 	/* Configure MMIO window before FSP-S locks the DMI registers */
-	lpc_open_mmio_window(CONFIG_EC_CLEVO_IT5570_RAM_BASE, 0x10000);
+	//lpc_open_mmio_window(CONFIG_EC_CLEVO_IT5570_RAM_BASE, 0x10000);
 }
 
 static void mainboard_prune_touchpads(void *unused)

@@ -202,12 +202,10 @@ chip soc/intel/tigerlake
 			end
 		end
 		device ref pch_espi on
-			chip ec/clevo/it5570
-				device pnp 0c09.0 on end
-				register "fan_mode" = "FAN_MODE_CUSTOM"
-				register "fans[0].curve.temperature" = "{ 0, 65, 75, 100 }"
-				register "fans[0].curve.speed" = "{ 16, 20, 30, 100 }"
-			end
+			register "gen1_dec" = "0x000c0081"
+			register "gen2_dec" = "0x00040069"
+			register "gen3_dec" = "0x00fc0E01"
+			register "gen4_dec" = "0x00fc0F01"
 		end
 		device ref hda on
 			register "PchHdaAudioLinkHdaEnable" = "1"
