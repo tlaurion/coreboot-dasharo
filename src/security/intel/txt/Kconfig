@@ -29,6 +29,22 @@ config INTEL_TXT_SINITACM_FILE
 	  access to Intel resources. Or for some platforms found inside the
 	  blob repository.
 
+config INTEL_TXT_CBFS_AP_INIT_FILE
+	string "TXT AP pre-RAM init file"
+	depends on PLATFORM_USES_FSP2_0
+	help
+	  Intel TXT pre-RAM AP initialization code. The base address of this
+	  file will be passed to FSP to initialize the APs before RAM is up.
+
+config INTEL_TXT_CBFS_AP_INIT_POSITION
+	hex "TXT AP pre-RAM init file base address"
+	depends on PLATFORM_USES_FSP2_0
+	default 0xfffe0000
+	help
+	  Intel TXT pre-RAM AP initialization code base address in CBFS. This
+	  has to match the base address the TXT AP initalization module was
+	  compiled for.
+
 config INTEL_TXT_DPR_SIZE
 	int
 	range 0 255
