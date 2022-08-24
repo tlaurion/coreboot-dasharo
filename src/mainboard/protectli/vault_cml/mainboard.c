@@ -42,6 +42,8 @@ void mainboard_silicon_init_params(FSPS_UPD *supd)
 	 * when the screen goes blank/inactive/idle in the OS */
 	supd->FspsTestConfig.RenderStandby = 0;
 	supd->FspsTestConfig.PmSupport = 0;
+
+	supd->FspsConfig.TxtEnable = 1;
 }
 
 

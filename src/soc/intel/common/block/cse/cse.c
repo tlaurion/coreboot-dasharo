@@ -1138,7 +1138,7 @@ static void cse_set_state(struct device *dev)
 	/*
 	 * Hard-coded default value as `1` to always disable ME on startup.
 	 */
-	const unsigned int cmos_me_state = get_uint_option("me_state", 1);
+	const unsigned int cmos_me_state = get_uint_option("me_state", 0);
 
 	if (cmos_me_state == UINT_MAX)
 		return;

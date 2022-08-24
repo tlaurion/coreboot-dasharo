@@ -18,11 +18,22 @@ $(CONFIG_INTEL_TXT_CBFS_BIOS_ACM)-file := $(CONFIG_INTEL_TXT_BIOSACM_FILE)
 $(CONFIG_INTEL_TXT_CBFS_BIOS_ACM)-type := raw
 $(CONFIG_INTEL_TXT_CBFS_BIOS_ACM)-align := $(CONFIG_INTEL_TXT_BIOSACM_ALIGNMENT)
 
-ifeq ($(CONFIG_PLATFORM_USES_FSP2_0)),y)
+ifeq ($(CONFIG_PLATFORM_USES_FSP2_0),y)
 cbfs-files-y += txt_ap_init
 txt_ap_init-file := $(CONFIG_INTEL_TXT_CBFS_AP_INIT_FILE)
 txt_ap_init-type := raw
 txt_ap_init-COREBOOT-position := $(CONFIG_INTEL_TXT_CBFS_AP_INIT_POSITION)
+ifneq ($(CONFIG_INTEL_BTG_BIOSACM_FILE),"")
+cbfs-files-y += $(CONFIG_INTEL_BTG_CBFS_BIOS_ACM)
+$(CONFIG_INTEL_BTG_CBFS_BIOS_ACM)-file := $(CONFIG_INTEL_BTG_BIOSACM_FILE)
+$(CONFIG_INTEL_BTG_CBFS_BIOS_ACM)-type := raw
+$(CONFIG_INTEL_BTG_CBFS_BIOS_ACM)-COREBOOT-position := 0xfff80000
+
+# Only servers needs to include the ACM in FIT
+$(call add_intermediate, add_acm_fit, $(IFITTOOL) set_fit_ptr)
+	$(IFITTOOL) -r COREBOOT -a -n $(CONFIG_INTEL_BTG_CBFS_BIOS_ACM) -t 2 \
+		-s $(CONFIG_CPU_INTEL_NUM_FIT_ENTRIES) -f $<
+endif
 endif
 
 ifneq ($(CONFIG_INTEL_TXT_SINITACM_FILE),"")
@@ -34,10 +45,6 @@ $(CONFIG_INTEL_TXT_CBFS_SINIT_ACM)-compression := lzma
 endif
 
 ifeq ($(CONFIG_CPU_INTEL_FIRMWARE_INTERFACE_TABLE),y)
-
-$(call add_intermediate, add_acm_fit, $(IFITTOOL) set_fit_ptr)
-	$(IFITTOOL) -r COREBOOT -a -n $(CONFIG_INTEL_TXT_CBFS_BIOS_ACM) -t 2 \
-		-s $(CONFIG_CPU_INTEL_NUM_FIT_ENTRIES) -f $<
 
 # CBnT does not use FIT for IBB
 ifneq ($(CONFIG_INTEL_CBNT_SUPPORT),y)
@@ -51,7 +58,6 @@ ibb-files += bootblock
 $(call add_intermediate, add_ibb_fit, $(IFITTOOL) set_fit_ptr)
 	$(foreach file, $(ibb-files), $(shell $(IFITTOOL) -f $< -a -n $(file) -t 7 \
 		-s $(CONFIG_CPU_INTEL_NUM_FIT_ENTRIES) -r COREBOOT)) true
-
 endif # INTEL_CBNT_SUPPORT
 
 endif # CPU_INTEL_FIRMWARE_INTERFACE_TABLE

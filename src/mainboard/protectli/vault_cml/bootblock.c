@@ -1,9 +1,10 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 
 #include <bootblock_common.h>
-#include <soc/gpio.h>
 #include <superio/ite/common/ite.h>
 #include <superio/ite/it8786e/it8786e.h>
+#include <soc/gpio.h>
+
 #include "gpio.h"
 
 #define UART_DEV PNP_DEV(0x2e, IT8786E_SP1)

@@ -10,7 +10,7 @@
 
 #include <Uefi/UefiBaseType.h>
 
-static const EFI_GUID dasharo_system_features_guid = {
+const EFI_GUID dasharo_system_features_guid = {
 	0xd15b327e, 0xff2d, 0x4fc1, { 0xab, 0xf6, 0xc1, 0x2b, 0xd0, 0x8c, 0x13, 0x59 }
 };
 
