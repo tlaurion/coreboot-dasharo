@@ -1679,6 +1679,8 @@ XhcDriverBindingSupported (
   EFI_PCI_IO_PROTOCOL     *PciIo;
   USB_CLASSC              UsbClassCReg;
 
+  return EFI_UNSUPPORTED;
+
   //
   // Test whether there is PCI IO Protocol attached on the controller handle.
   //
