@@ -152,6 +152,11 @@ const char *const elkhartlake_pch_group_dsw_names[] = {
 "GP_DSW09","Native F1/GP-Out",
 "GP_DSW10","Native F1/GP-Out",
 "GP_DSW11","Native F1/GP-Out",
+"GPIO_RSVD_8","n/a",
+"GPIO_RSVD_9","n/a",
+"GPIO_RSVD_10","n/a",
+"GPIO_RSVD_11","n/a",
+"GPIO_RSVD_12","n/a",
 };
 
 const struct gpio_group elkhart_pch_group_dsw = {
@@ -490,35 +495,6 @@ const struct gpio_group elkhart_pch_group_vgpio_usb = {
 	.pad_names	= elkhartlake_pch_group_vgpio_usb_names,
 };
 
-
-const char *const elkhartlake_pch_group_gpd_names[] = {
-"GPD0","n/a",
-"GPD1","n/a",
-"GPD2","n/a",
-"GPD3","n/a",
-"GPD4","n/a",
-"GPD5","n/a",
-"GPD6","n/a",
-"GPD7","n/a",
-"GPD8","n/a",
-"GPD9","n/a",
-"GPD10","n/a",
-"GPD11","n/a",
-"GPIO_RSVD_8","n/a",
-"GPIO_RSVD_9","n/a",
-"GPIO_RSVD_10","n/a",
-"GPIO_RSVD_11","n/a",
-"GPIO_RSVD_12","n/a",
-};
-
-const struct gpio_group elkhart_pch_group_gpd = {
-	.display	= "------- GPIO Group GPP_GPD -------",
-	.pad_count	= ARRAY_SIZE(elkhartlake_pch_group_gpd_names) / 2,
-	.func_count	= 2,
-	.pad_names	= elkhartlake_pch_group_gpd_names,
-};
-
-
 const struct gpio_group *const elkhartlake_community_0_groups[] = {
 	&elkhart_pch_group_b,
     &elkhart_pch_group_t,
@@ -548,7 +524,7 @@ const struct gpio_community elkhartlake_community_1 = {
 };
 
 const struct gpio_group *const elkhartlake_community_2_groups[] = {
-    &elkhart_pch_group_gpd,
+    &elkhart_pch_group_dsw,
 };
 
 const struct gpio_community elkhartlake_community_2 = {
