@@ -438,7 +438,7 @@ const char *const elkhartlake_pch_group_v_names[] = {
 const struct gpio_group elkhartlake_pch_group_v = {
 	.display	= "------- GPIO Group GPP_V -------",
 	.pad_count	= ARRAY_SIZE(elkhartlake_pch_group_v_names) / 2,
-	.func_count	= 7,
+	.func_count	= 2,
 	.pad_names	= elkhartlake_pch_group_v_names,
 };
 
