@@ -20,6 +20,7 @@
 #include "gpio_names/sunrise.h"
 #include "gpio_names/tigerlake.h"
 #include "gpio_names/alderlake_h.h"
+#include "gpio_names/elkhartlake.h"
 
 #define SBBAR_SIZE	(16 * MiB)
 #define PCR_PORT_SIZE	(64 * KiB)
@@ -217,6 +218,10 @@ const struct gpio_community *const *get_gpio_communities(struct pci_dev *const s
 		*community_count = ARRAY_SIZE(alderlake_pch_h_communities);
 		*pad_stepping = 16;
 		return alderlake_pch_h_communities;
+	case PCI_DEVICE_ID_INTEL_EHL:
+		*community_count = ARRAY_SIZE(elkhartlake_pch_communities);
+		*pad_stepping = 16;
+		return elkhartlake_pch_communities;
 	default:
 		return NULL;
 	}
