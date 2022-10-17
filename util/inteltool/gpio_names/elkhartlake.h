@@ -503,7 +503,7 @@ const struct gpio_group *const elkhartlake_community_0_groups[] = {
 
 const struct gpio_community elkhartlake_community_0 = {
 	.name		= "------- GPIO Community 0 -------",
-	.pcr_port_id	= 0x69,
+	.pcr_port_id	= 0x6e,
 	.group_count	= ARRAY_SIZE(elkhartlake_community_0_groups),
 	.groups		= elkhartlake_community_0_groups,
 };
@@ -518,7 +518,7 @@ const struct gpio_group *const elkhartlake_community_1_groups[] = {
 
 const struct gpio_community elkhartlake_community_1 = {
 	.name		= "------- GPIO Community 1 -------",
-	.pcr_port_id	= 0x69,
+	.pcr_port_id	= 0x6d,
 	.group_count	= ARRAY_SIZE(elkhartlake_community_1_groups),
 	.groups		= elkhartlake_community_1_groups,
 };
@@ -529,7 +529,7 @@ const struct gpio_group *const elkhartlake_community_2_groups[] = {
 
 const struct gpio_community elkhartlake_community_2 = {
 	.name		= "------- GPIO Community 2 -------",
-	.pcr_port_id	= 0x69,
+	.pcr_port_id	= 0x6c,
 	.group_count	= ARRAY_SIZE(elkhartlake_community_2_groups),
 	.groups		= elkhartlake_community_2_groups,
 };
@@ -542,7 +542,7 @@ const struct gpio_group *const elkhartlake_community_3_groups[] = {
 
 const struct gpio_community elkhartlake_community_3 = {
 	.name		= "------- GPIO Community 3 -------",
-	.pcr_port_id	= 0x69,
+	.pcr_port_id	= 0x6b,
 	.group_count	= ARRAY_SIZE(elkhartlake_community_3_groups),
 	.groups		= elkhartlake_community_3_groups,
 };
@@ -555,7 +555,7 @@ const struct gpio_group *const elkhartlake_community_4_groups[] = {
 
 const struct gpio_community elkhartlake_community_4 = {
 	.name		= "------- GPIO Community 4 -------",
-	.pcr_port_id	= 0x69,
+	.pcr_port_id	= 0x6a,
 	.group_count	= ARRAY_SIZE(elkhartlake_community_4_groups),
 	.groups		= elkhartlake_community_4_groups,
 };
