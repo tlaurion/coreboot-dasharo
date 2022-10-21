@@ -167,19 +167,35 @@ static bool cbfs_file_hash_mismatch(const void *buffer, size_t size,
 	}
 
 	if (CONFIG(TPM_MEASURED_BOOT) && !ENV_SMM) {
-		struct vb2_hash calculated_hash;
+		unsigned int i;
+		struct tpm_digest digests[ENABLED_TPM_ALGS_NUM];
+		struct vb2_hash hashes[ENABLED_TPM_ALGS_NUM];
+		bool failure = false;
 
-		/* No need to re-hash file if we already have it from verification. */
-		if (!hash || hash->algo != TPM_MEASURE_ALGO) {
+		for (i = 0; i < ENABLED_TPM_ALGS_NUM; ++i) {
+			/* No need to re-hash file if we already have it from verification. */
+			if (hash && hash->algo == enabled_tpm_algs[i]) {
+				digests[i].hash = hash->raw;
+				digests[i].hash_type = hash->algo;
+				continue;
+			}
+
 			if (vb2_hash_calculate(vboot_hwcrypto_allowed(), buffer, size,
-					       TPM_MEASURE_ALGO, &calculated_hash))
-				hash = NULL;
-			else
-				hash = &calculated_hash;
+					       enabled_tpm_algs[i], &hashes[i])) {
+				failure = true;
+				break;
+			}
+
+			digests[i].hash = hashes[i].raw;
+			digests[i].hash_type = enabled_tpm_algs[i];
 		}
 
-		if (!hash ||
-		    tspi_cbfs_measurement(mdata->h.filename, be32toh(mdata->h.type), hash))
+		if (!failure &&
+		    tspi_cbfs_measurement(mdata->h.filename, be32toh(mdata->h.type), digests,
+					  ARRAY_SIZE(digests)))
+			failure = true;
+
+		if (failure)
 			ERROR("failed to measure '%s' into TCPA log\n", mdata->h.filename);
 			/* We intentionally continue to boot on measurement errors. */
 	}

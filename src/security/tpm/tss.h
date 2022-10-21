@@ -11,9 +11,19 @@
 
 #include <types.h>
 
+#include <vb2_api.h>
+
 #include <security/tpm/tss/common/tss_common.h>
 #include <security/tpm/tss_errors.h>
 #include <security/tpm/tss/vendor/cr50/cr50.h>
+
+/* Unlike vb2_hash, this structure only points to hash data which avoid use of memcpy() */
+struct tpm_digest {
+	/* Pointer to an array of length vb2_digest_size(hash_type) or bigger */
+	const uint8_t *hash;
+	/* VB2_HASH_NONE/VB2_HASH_INVALID here marks the end of a digests list */
+	enum vb2_hash_algorithm hash_type;
+};
 
 #if CONFIG(TPM1)
 
@@ -187,8 +197,7 @@ uint32_t tlcl_lock_nv_write(uint32_t index);
 /**
  * Perform a TPM_Extend.
  */
-uint32_t tlcl_extend(int pcr_num, const uint8_t *in_digest,
-		     uint8_t *out_digest);
+uint32_t tlcl_extend(int pcr_num, const struct tpm_digest *digests, int digests_len);
 
 /**
  * Disable platform hierarchy. Specific to TPM2. The TPM error code is returned.

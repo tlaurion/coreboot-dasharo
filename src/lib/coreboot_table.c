@@ -23,6 +23,7 @@
 #include <spi_flash.h>
 #include <smmstore.h>
 #include <types.h>
+#include <security/tpm/tspi.h>
 
 #if CONFIG(USE_OPTION_TABLE)
 #include <option_table.h>
@@ -289,6 +290,25 @@ static void add_cbmem_pointers(struct lb_header *header)
 	}
 }
 
+static void lb_tpm_std_log(struct lb_header *header)
+{
+	struct lb_range *lb_range;
+	const struct tcpa_log_ref *range = cbmem_find(CBMEM_ID_TPM_LOG_REF);
+
+	if (range == NULL)
+		return;  /* The section is not present */
+
+	lb_range = (struct lb_range *)lb_new_record(header);
+	if (lb_range == NULL) {
+		printk(BIOS_ERR, "No more room in coreboot table!\n");
+		return;
+	}
+	lb_range->tag = LB_TAG_TPM_STD_LOG;
+	lb_range->size = sizeof(*lb_range);
+	lb_range->range_start = range->start;
+	lb_range->range_size = range->size;
+}
+
 static struct lb_mainboard *lb_mainboard(struct lb_header *header)
 {
 	struct lb_record *rec;
@@ -487,6 +507,9 @@ static uintptr_t write_coreboot_table(uintptr_t rom_table_end)
 
 	/* Serialize resource map into mem table types (LB_MEM_*) */
 	bootmem_write_memory_table(lb_memory(head));
+
+	/* Record reference to TPM log composed according to specification (either one) */
+	lb_tpm_std_log(head);
 
 	/* Record our motherboard */
 	lb_mainboard(head);

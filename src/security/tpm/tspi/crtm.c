@@ -106,7 +106,8 @@ static bool is_runtime_data(const char *name)
 	return !strcmp(allowlist, name);
 }
 
-uint32_t tspi_cbfs_measurement(const char *name, uint32_t type, const struct vb2_hash *hash)
+uint32_t tspi_cbfs_measurement(const char *name, uint32_t type, struct tpm_digest *digests,
+			       int digests_len)
 {
 	uint32_t pcr_index;
 	char tcpa_metadata[TCPA_PCR_HASH_NAME];
@@ -144,12 +145,12 @@ uint32_t tspi_cbfs_measurement(const char *name, uint32_t type, const struct vb2
 
 	snprintf(tcpa_metadata, TCPA_PCR_HASH_NAME, "CBFS: %s", name);
 
-	return tpm_extend_pcr(pcr_index, hash->algo, hash->raw, vb2_digest_size(hash->algo),
-			      tcpa_metadata);
+	return tpm_extend_pcr(pcr_index, digests, digests_len, tcpa_metadata);
 }
 
 int tspi_measure_cache_to_pcr(void)
 {
+#if !CONFIG(TPM_LOG_TPM2)
 	int i;
 	struct tcpa_table *tclt = tcpa_log_init();
 
@@ -166,12 +167,18 @@ int tspi_measure_cache_to_pcr(void)
 	for (i = 0; i < tclt->num_entries; i++) {
 		struct tcpa_entry *tce = &tclt->entries[i];
 		if (tce) {
+			struct tpm_digest digests[] = {
+#if (CONFIG(TPM_LOG_CB) && CONFIG(TPM1)) || CONFIG(TPM_LOG_TPM12)
+				{ tce->digest, VB2_HASH_SHA1 }
+#else
+				{ tce->digest, VB2_HASH_SHA256 }
+#endif
+			};
+
 			printk(BIOS_DEBUG, "TPM: Write digest for"
 			       " %s into PCR %d\n",
 			       tce->name, tce->pcr);
-			int result = tlcl_extend(tce->pcr,
-						 tce->digest,
-						 NULL);
+			int result = tlcl_extend(tce->pcr, digests, ARRAY_SIZE(digests));
 			if (result != TPM_SUCCESS) {
 				printk(BIOS_ERR, "TPM: Writing digest"
 				       " of %s into PCR failed with error"
@@ -183,4 +190,14 @@ int tspi_measure_cache_to_pcr(void)
 	}
 
 	return VB2_SUCCESS;
+#else
+	/* This means the table is empty. */
+	if (!tcpa_log_available())
+		return VB2_SUCCESS;
+
+	/*
+	 * Walking TPM2 log requires unmarshalling and is left for corresponding implementation.
+	 */
+	return tcpa_measure_cache_to_pcr();
+#endif
 }
