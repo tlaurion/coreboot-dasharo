@@ -62,6 +62,7 @@
 #define CBMEM_ID_TCPA_LOG	0x54435041 /* TPM log in coreboot-specific format */
 #define CBMEM_ID_TCPA_TCG_LOG	0x54445041 /* TPM1 ACPI log */
 #define CBMEM_ID_TPM_LOG	0x54504D4C /* TPM log per specification (either one) */
+#define CBMEM_ID_TPM_LOG_REF	0x544C4752 /* Memory range allocated for CBMEM_ID_TPM_LOG */
 #define CBMEM_ID_TIMESTAMP	0x54494d45
 #define CBMEM_ID_TPM2_TCG_LOG	0x54504d32 /* TPM2 ACPI log */
 #define CBMEM_ID_TPM_PPI	0x54505049
@@ -139,6 +140,7 @@
 	{ CBMEM_ID_TCPA_LOG,		"TCPA LOG   " }, \
 	{ CBMEM_ID_TCPA_TCG_LOG,	"TCPA TCGLOG" }, \
 	{ CBMEM_ID_TPM_LOG,		"TPM STD LOG" }, \
+	{ CBMEM_ID_TPM_LOG_REF,		"TPM LOG REF" }, \
 	{ CBMEM_ID_TIMESTAMP,		"TIME STAMP " }, \
 	{ CBMEM_ID_TPM2_TCG_LOG,	"TPM2 TCGLOG" }, \
 	{ CBMEM_ID_TPM_PPI,		"TPM PPI    " }, \

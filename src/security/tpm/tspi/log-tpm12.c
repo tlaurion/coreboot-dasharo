@@ -26,6 +26,7 @@ static struct tcpa_table *tcpa_cbmem_init(void)
 	if (cbmem_possibly_online()) {
 		size_t tcpa_log_len;
 		struct spec_id_event_data *hdr;
+		struct tcpa_log_ref *tcpa_ref;
 
 		tclt = cbmem_find(CBMEM_ID_TPM_LOG);
 		if (tclt)
@@ -51,6 +52,10 @@ static struct tcpa_table *tcpa_cbmem_init(void)
 
 		tclt->max_entries = MAX_TCPA_LOG_ENTRIES;
 		tclt->num_entries = 0;
+
+		tcpa_ref = cbmem_add(CBMEM_ID_TPM_LOG_REF, sizeof(*tcpa_ref));
+		tcpa_ref->start = (uintptr_t)tclt;
+		tcpa_ref->size = tcpa_log_len;
 	}
 
 	return tclt;

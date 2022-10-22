@@ -22,6 +22,7 @@
 #include <commonlib/loglevel.h>
 #include <commonlib/timestamp_serialized.h>
 #include <commonlib/tcpa_log_serialized.h>
+#include <commonlib/tpm_log_defs.h>
 #include <commonlib/coreboot_tables.h>
 
 #ifdef __OpenBSD__
@@ -268,6 +269,7 @@ static int find_cbmem_entry(uint32_t id, uint64_t *addr, size_t *size)
 static struct lb_cbmem_ref timestamps;
 static struct lb_cbmem_ref console;
 static struct lb_cbmem_ref tcpa_log;
+static struct lb_range tpm_std_log;
 static struct lb_memory_range cbmem;
 
 /* This is a work-around for a nasty problem introduced by initially having
@@ -288,6 +290,13 @@ static struct lb_cbmem_ref parse_cbmem_ref(const struct lb_cbmem_ref *cbmem_ref)
 
 	debug("      cbmem_addr = %" PRIx64 "\n", ret.cbmem_addr);
 
+	return ret;
+}
+
+static struct lb_range parse_range(const struct lb_range *range)
+{
+	struct lb_range ret;
+	aligned_memcpy(&ret, range, sizeof(ret));
 	return ret;
 }
 
@@ -346,6 +355,11 @@ static int parse_cbtable_entries(const struct mapping *table_mapping)
 			debug("    Found TSC info.\n");
 			tsc_freq_khz = ((struct lb_tsc_info *)lbr_p)->freq_khz;
 			continue;
+		case LB_TAG_TPM_STD_LOG: {
+			debug("    Found TPM standard log table.\n");
+			tpm_std_log = parse_range((struct lb_range *)lbr_p);
+			continue;
+		}
 		case LB_TAG_FORWARD: {
 			int ret;
 			/*
@@ -841,6 +855,202 @@ static void timestamp_add_now(uint32_t timestamp_id)
 	}
 
 	unmap_memory(&timestamp_mapping);
+}
+
+static void print_hex(uint8_t *hex, size_t len)
+{
+	unsigned int i;
+	for (i = 0; i < len; i++)
+		printf("%02x", *(hex + i));
+	printf("\n");
+}
+
+static void parse_tpm12_log(const struct tcpa_spec_entry *spec_log)
+{
+	static uint8_t zero_block[sizeof(struct tcpa_spec_entry)];
+
+	uintptr_t current;
+	uint32_t counter = 0;
+
+	printf("TCPA log:\n");
+	printf("\tSpecification: %d.%d%d",
+	       spec_log->spec_version_major,
+	       spec_log->spec_version_minor,
+	       spec_log->spec_errata);
+	printf("\tPlatform class: %s\n",
+	       le32toh(spec_log->platform_class) == 0 ? "PC Client" :
+	       le32toh(spec_log->platform_class) == 1 ? "Server" : "Unknown");
+
+	current = (uintptr_t)&spec_log->vendor_info[spec_log->vendor_info_size];
+	while (memcmp((const void *)current, (const void *)zero_block, sizeof(zero_block))) {
+		uint32_t len;
+		struct tcpa_log_entry *log_entry = (void *)current;
+		uint32_t event_type = le32toh(log_entry->event_type);
+
+		printf("TCPA log entry %u:\n", ++counter);
+		printf("\tPCR: %d\n", le32toh(log_entry->pcr));
+		if (event_type >= ARRAY_SIZE(tpm_event_types))
+			printf("\tEvent type: Unknown (0x%x)\n", event_type);
+		else
+			printf("\tEvent type: %s\n", tpm_event_types[event_type]);
+		printf("\tDigest: ");
+		print_hex(log_entry->digest, SHA1_DIGEST_SIZE);
+		current += sizeof(struct tcpa_log_entry);
+		len = le32toh(log_entry->event_data_size);
+		if (len != 0) {
+			current += len;
+			printf("\tEvent data: %.*s\n", len, log_entry->event);
+		} else {
+			printf("\tEvent data not provided\n");
+		}
+	}
+}
+
+static uint32_t print_tpm2_digests(struct tcg_pcr_event2_header *log_entry)
+{
+	unsigned int i;
+	uintptr_t current = (uintptr_t)log_entry->digests;
+
+	for (i = 0; i < le32toh(log_entry->digest_count); i++) {
+		struct tpm_hash_algorithm *hash = (struct tpm_hash_algorithm *)current;
+		switch (le16toh(hash->hashAlg)) {
+		case TPM2_ALG_SHA1:
+			printf("\t\t SHA1: ");
+			print_hex(hash->digest.sha1, SHA1_DIGEST_SIZE);
+			current += sizeof(hash->hashAlg) + SHA1_DIGEST_SIZE;
+			break;
+		case TPM2_ALG_SHA256:
+			printf("\t\t SHA256: ");
+			print_hex(hash->digest.sha256, SHA256_DIGEST_SIZE);
+			current += sizeof(hash->hashAlg) + SHA256_DIGEST_SIZE;
+			break;
+		case TPM2_ALG_SHA384:
+			printf("\t\t SHA384: ");
+			print_hex(hash->digest.sha384, SHA384_DIGEST_SIZE);
+			current += sizeof(hash->hashAlg) + SHA384_DIGEST_SIZE;
+			break;
+		case TPM2_ALG_SHA512:
+			printf("\t\t SHA512: ");
+			print_hex(hash->digest.sha512, SHA512_DIGEST_SIZE);
+			current += sizeof(hash->hashAlg) + SHA512_DIGEST_SIZE;
+			break;
+		case TPM2_ALG_SM3_256:
+			printf("\t\t SM3: ");
+			print_hex(hash->digest.sm3_256, SM3_256_DIGEST_SIZE);
+			current += sizeof(hash->hashAlg) + SM3_256_DIGEST_SIZE;
+			break;
+		default:
+			die("Unknown hash algorithm\n");
+		}
+	}
+
+	return current - (uintptr_t)&log_entry->digest_count;
+}
+
+static void parse_tpm2_log(const struct tcg_efi_spec_id_event *tpm2_log)
+{
+	static uint8_t zero_block[12]; /* Only PCR index, event type and digest count */
+
+	uintptr_t current;
+	uint32_t counter = 0;
+
+	printf("TPM2 log:\n");
+	printf("\tSpecification: %d.%d%d\n",
+	       tpm2_log->spec_version_major,
+	       tpm2_log->spec_version_minor,
+	       tpm2_log->spec_errata);
+	printf("\tPlatform class: %s\n",
+	       le32toh(tpm2_log->platform_class) == 0 ? "PC Client" :
+	       le32toh(tpm2_log->platform_class) == 1 ? "Server" : "Unknown");
+
+	/* Start after the first variable-sized part of the header */
+	current = (uintptr_t)&tpm2_log->digest_sizes[le32toh(tpm2_log->num_of_algorithms)];
+	/* current is at `uint8_t vendor_info_size` here */
+	current += 1 + *(uint8_t *)current;
+
+	while (memcmp((const void *)current, (const void *)zero_block, sizeof(zero_block))) {
+		uint32_t len;
+		struct tcg_pcr_event2_header *log_entry = (void *)current;
+		uint32_t event_type = le32toh(log_entry->event_type);
+
+		printf("TPM2 log entry %u:\n", ++counter);
+		printf("\tPCR: %d\n", le32toh(log_entry->pcr_index));
+		if (event_type >= ARRAY_SIZE(tpm_event_types))
+			printf("\tEvent type: Unknown (0x%x)\n", event_type);
+		else
+			printf("\tEvent type: %s\n", tpm_event_types[event_type]);
+
+		current = (uintptr_t)&log_entry->digest_count;
+		if (le32toh(log_entry->digest_count) > 0) {
+			printf("\tDigests:\n");
+			current += print_tpm2_digests(log_entry);
+		} else {
+			printf("\tNo digests in this log entry\n");
+			current += sizeof(log_entry->digest_count);
+		}
+		/* Now event size and event are left to be parsed */
+		len = le32toh(*(uint32_t *)current);
+		current += sizeof(uint32_t);
+		if (len != 0) {
+			printf("\tEvent data: %d %.*s\n", len, len, (const char *)current);
+			current += len;
+		} else {
+			printf("\tEvent data not provided\n");
+		}
+	}
+}
+
+/* Dump the tcpa log table in format from specification */
+static void dump_tcpa_std_log(void)
+{
+	const struct tcpa_spec_entry *tspec_entry;
+	const struct tcg_efi_spec_id_event *tcg_spec_entry;
+	uint64_t addr;
+	size_t size;
+	struct mapping log_mapping;
+
+	if (tpm_std_log.tag != LB_TAG_TPM_STD_LOG) {
+		fprintf(stderr, "No TPM log found in coreboot table.\n");
+		return;
+	}
+
+	addr = tpm_std_log.range_start;
+	size = tpm_std_log.range_size;
+
+	tspec_entry = map_memory(&log_mapping, addr, size);
+	if (!tspec_entry)
+		die("Unable to map TCPA log header\n");
+
+	if (!strcmp((const char *)tspec_entry->signature, TCPA_SPEC_ID_EVENT_SIGNATURE)) {
+		if (tspec_entry->spec_version_major == 1 &&
+		    tspec_entry->spec_version_minor == 2 &&
+		    tspec_entry->spec_errata >= 1 &&
+		    le32toh(tspec_entry->entry.event_type) == EV_NO_ACTION) {
+			parse_tpm12_log(tspec_entry);
+		} else {
+			fprintf(stderr, "Unknown TCPA log specification\n");
+		}
+		unmap_memory(&log_mapping);
+		return;
+	}
+
+	unmap_memory(&log_mapping);
+	tcg_spec_entry = map_memory(&log_mapping, addr, size);
+
+	if (!strcmp((const char *)tcg_spec_entry->signature, TCG_EFI_SPEC_ID_EVENT_SIGNATURE)) {
+		if (tcg_spec_entry->spec_version_major == 2 &&
+		    tcg_spec_entry->spec_version_minor == 0 &&
+		    le32toh(tcg_spec_entry->event_type) == EV_NO_ACTION) {
+			parse_tpm2_log(tcg_spec_entry);
+		} else {
+			fprintf(stderr, "Unknown TPM2 log specification.\n");
+		}
+		unmap_memory(&log_mapping);
+		return;
+	}
+
+	fprintf(stderr, "Unknown TPM log specification: %s\n",
+		(const char *)tcg_spec_entry->signature);
 }
 
 /* dump the tcpa log table */
@@ -1676,8 +1886,12 @@ int main(int argc, char** argv)
 	if (timestamp_type != TIMESTAMPS_PRINT_NONE)
 		dump_timestamps(timestamp_type);
 
-	if (print_tcpa_log)
-		dump_tcpa_log();
+	if (print_tcpa_log) {
+		if (tpm_std_log.tag != LB_TAG_UNUSED)
+			dump_tcpa_std_log();
+		else
+			dump_tcpa_log();
+	}
 
 	unmap_memory(&lbtable_mapping);
 
