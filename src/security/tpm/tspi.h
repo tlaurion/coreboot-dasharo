@@ -11,6 +11,8 @@
 #include <commonlib/tcpa_log_serialized.h>
 #elif CONFIG(TPM_LOG_TPM12)
 #include "tpm12_log_serialized.h"
+#elif CONFIG(TPM_LOG_TPM2)
+#include "tpm2_log_serialized.h"
 #endif
 
 #define TPM_PCR_MAX_LEN 64
