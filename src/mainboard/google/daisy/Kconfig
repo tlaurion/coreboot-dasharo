@@ -16,6 +16,7 @@ config BOARD_SPECIFIC_OPTIONS
 	select HAVE_LINEAR_FRAMEBUFFER
 	select I2C_TPM
 	select MAINBOARD_HAS_TPM1
+	select USE_TPM_LOG_CB
 
 config MAINBOARD_DIR
 	default "google/daisy"

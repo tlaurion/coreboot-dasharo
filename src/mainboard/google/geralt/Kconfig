@@ -28,6 +28,7 @@ config BOARD_SPECIFIC_OPTIONS
 	select I2C_TPM if VBOOT
 	select MAINBOARD_HAS_TPM2 if VBOOT
 	select TPM_GOOGLE_TI50 if VBOOT
+	select USE_TPM_LOG_CB
 
 config MAINBOARD_DIR
 	string

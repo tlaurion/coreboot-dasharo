@@ -4,9 +4,12 @@
 #define TSPI_H_
 
 #include <security/tpm/tss.h>
-#include <commonlib/tcpa_log_serialized.h>
 #include <commonlib/region.h>
 #include <vb2_api.h>
+
+#if CONFIG(TPM_LOG_CB)
+#include <commonlib/tcpa_log_serialized.h>
+#endif
 
 #define TPM_PCR_MAX_LEN 64
 #define HASH_DATA_CHUNK_SIZE 1024
