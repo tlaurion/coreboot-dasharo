@@ -6,8 +6,8 @@ transparent measured boot mechanism.
 
 ## IBB/CRTM
 The "Initial Boot Block" or "Core Root of Trust for Measurement" is the first
-code block loaded at reset vector and measured by a DRTM solution.
-In case SRTM mode is active, the IBB measures itself before measuring the next
+code block loaded at reset vector.
+In case SRTM is active, the IBB measures itself before measuring the next
 code block. In coreboot, cbfs files which are part of the IBB are identified
 by a metadata tag. This makes it possible to have platform specific IBB
 measurements without hardcoding them.
@@ -19,12 +19,19 @@ will be added later to the implementation.
 Also SoCs making use of VBOOT_RETURN_FROM_VERSTAGE are not able to use the
 measured boot extension because of platform constraints.
 
-## SRTM Mode
-The "Static Root of Trust for Measurement" is the easiest way doing measurements
-by measuring code before it is loaded.
+## SRTM
+The "Static Root of Trust for Measurement" start with boot process after
+platform shutdown or restart. It first establishes the root of trust by
+measuring bootblock, then the chain of trust is continued by each stage adding
+measurements of its successor before passing control to it.
+
+The idea is to log everything that has been run up until now and if everything
+is of known origin and wasn't tempered with, assume the environment was not
+compromised. For this to work no stage should escape being measured or change
+in unpredictable way after the measurement while still in use.
 
 ### Measurements
-SRTM mode measurements are done starting with the IBB as root of trust.
+SRTM measurements are done starting with the IBB as root of trust.
 Only CBFS contents are measured at the moment.
 
 #### CBFS files (stages, blobs)
@@ -42,26 +49,79 @@ Only CBFS contents are measured at the moment.
 [srtm]: srtm.png
 
 ### TCPA eventlog
-coreboot makes use of its own TCPA log implementation. Normally the eventlog
-specification can be found via the TCG homepage:
+There are three supported formats of event logs:
+* coreboot-specific format.
+* [TPM1.2 Specification][TPM12] (section 3.3.3).
+* [TPM2.0 Specification][TPM20] (section 3.3.4).
 
-[UEFI Specification](https://trustedcomputinggroup.org/resource/tcg-efi-platform-specification/)
+[TPM12]: https://trustedcomputinggroup.org/wp-content/uploads/TCG_PCClientImplementation_1-21_1_00.pdf
+[TPM20]: https://trustedcomputinggroup.org/wp-content/uploads/TCG_PCClient_PFP_r1p05_v23_pub.pdf
 
-[BIOS Specification](https://www.trustedcomputinggroup.org/wp-content/uploads/TCG_PCClientImplementation_1-21_1_00.pdf)
+#### coreboot-specific format
 
-Both of them are not representing firmware measurements in a generalized way.
-Therefore we have to implement our own solution.
+```c
+struct tcpa_entry {
+	uint32_t pcr;           /* PCR number. */
+	char digest_type[10];   /* Hash algorithm name. */
+	uint8_t digest[64];     /* Digest (tail can be unused). */
+	uint32_t digest_length; /* Number of digest bytes used. */
+	char name[50];          /* Description of what was hashed. */
+} __packed;
 
-We decided to provide an easy to understand TCPA log which can be read out
-from the operating system and firmware itself.
+struct tcpa_table {
+	uint16_t max_entries;
+	uint16_t num_entries;
+	struct tcpa_entry entries[0];
+} __packed;
+```
 
-#### Table Format
+Single hash per PCR. No magic number or any other way of recognizing it.
+Endianness isn't specified.
+
+In principle can hold any hash with 512 bits or less. In practice,
+SHA-1 (for TPM1) and SHA-256 (TPM2) are used.
+
+Can be parsed by `cbmem`.
+
+##### Console dump format
 The first column describes the PCR index used for measurement.
 The second column is the hash of the raw data. The third column contains
 the hash algorithm used in the operation. The last column provides
 information about what is measured. First the namespace from where the data
 came from, CBFS or FMAP, then the name used to look up the data
 (region or file name).
+
+#### TPM 1.2 format
+Single hash per PCR (always SHA-1). First entry serves as a header, provides
+ID and version. Always little endian.
+
+Can be parsed by at least `cbmem` and Linux (exports in both text and binary
+forms).
+
+Data in vendor info section of the header:
+```c
+uint16_t max_entries;
+uint16_t num_entries;
+```
+In endianness of the firmware. Not meant to be stable.
+
+#### TPM 2.0 format
+One or more hashes per PCR, but implementation is limited to single hash (SHA-1,
+SHA-256, SHA-384 or SHA-512). First entry is overall compatible with TPM 1.2 and
+serves as a header with ID, version and number of hashing algorithms used.
+Always little endian.
+
+Can be parsed by at least `cbmem`, Linux (exports only binary form) and
+[Skiboot][skiboot].
+
+[skiboot]: https://github.com/open-power/skiboot/
+
+Data in vendor info section of the header:
+```c
+uint16_t max_entries;
+uint16_t num_entries;
+```
+In endianness of the firmware. Not meant to be stable.
 
 #### Example:
 ```bash
@@ -102,38 +162,36 @@ cbfstool coreboot.rom extract -r COREBOOT -n fallback/romstage -U -f /dev/stdout
 cbfstool coreboot.rom read -n SI_ME -f /dev/stdout | sha256sum
 ```
 
-## DRTM Mode
-The "Dynamic Root of Trust for Measurement" is realised by platform features
-like Intel TXT or Boot Guard. The features provide a way of loading a signed
-"Authenticated Code Module" aka signed blob. Most of these features are also
-a "Trusted Execution Environment", e.g. Intel TXT.
-
-DRTM gives you the ability of measuring the IBB from a higher Root of Trust
-instead of doing it yourself without any hardware support.
+## DRTM
+The "Dynamic Root of Trust for Measurement" avoids the need to verify
+everything that happened since boot by relying on hardware means like Intel
+TXT or Boot Guard. Instead of starting the chain at boot and building from
+there, DRTM ensures trust by isolating measured code from anything that can
+modify. This is done by starting DRTM early in a boot process when all
+hardware is in a well known state. Once DRTM is up, it remains resident in
+memory and can be interacted with through an API when a safe computation
+environment is necessary.
 
 ## Platform Configuration Register
-Normally PCR 0-7 are reserved for firmware usage. In coreboot we use just 4 PCR
-banks in order to store the measurements. coreboot uses the SHA-1 or SHA-256
-hash algorithm depending on the TPM specification for measurements. PCR-4 to
-PCR-7 are left empty.
+Normally PCR 0-7 are reserved for firmware usage. In coreboot we use just 3 or 4
+PCR banks in order to store the measurements. PCR-4 to PCR-7 are left empty.
 
-### PCR-0
-_Hash:_ SHA1
+### If USE_TPM_LOG_CB kconfig option is selected by the mainboard
 
-_Description:_ Google vboot GBB flags.
+vboot-specific (non-standard) PCR usage.
 
-### PCR-1
-_Hash:_ SHA1/SHA256
+* PCR-1 - SHA1 of Google vboot GBB flags, SHA1/SHA256 of Google vboot GBB HWID.
+* PCR-2 - SHA1/SHA256 of Core Root of Trust for Measurement which includes all stages,
+          data and blobs.
+* PCR-3 - SHA1/SHA256 of runtime data like hwinfo.hex or MRC cache.
 
-_Description:_ Google vboot GBB HWID.
+### If USE_TPM_LOG_CB kconfig option is NOT selected by the mainboard
 
-### PCR-2
-_Hash:_ SHA1/SHA256
+See [TPM1.2 Specification][TPM12] (section 3.3.3) and
+[TPM2.0 Specification][TPM20] (section 3.3.4) for PCR assignment information.
 
-_Description:_ Core Root of Trust for Measurement which includes all stages,
-data and blobs.
-
-### PCR-3
-_Hash:_ SHA1/SHA256
-
-_Description:_ Runtime data like hwinfo.hex or MRC cache.
+* PCR-0 - SHA1 of Google vboot GBB flags.
+* PCR-1 - SHA1/SHA256 of Google vboot GBB HWID.
+* PCR-2 - SHA1/SHA256 of Core Root of Trust for Measurement which includes all stages,
+          data and blobs.
+* PCR-3 - SHA1/SHA256 of runtime data like hwinfo.hex or MRC cache.
