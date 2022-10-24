@@ -1,5 +1,12 @@
+clone:
+  git:
+    image: woodpeckerci/plugin-git
+    settings:
+      lfs: false
+      recursive: true
 pipeline:
   build:
     image: coreboot/coreboot-sdk:2022-04-04_9a8d0a03db
     commands:
       - echo "this is test"
+
