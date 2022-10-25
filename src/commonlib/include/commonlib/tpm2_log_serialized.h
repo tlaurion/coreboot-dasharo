@@ -1,3 +1,5 @@
+// TODO: use header organization that was pushed to Gerrit
+
 /* SPDX-License-Identifier: GPL-2.0-only */
 
 #ifndef __TPM2_LOG_SERIALIZED_H__

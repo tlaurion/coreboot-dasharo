@@ -150,6 +150,8 @@ uint32_t tspi_cbfs_measurement(const char *name, uint32_t type, struct tpm_diges
 
 int tspi_measure_cache_to_pcr(void)
 {
+	// TODO: implement parse_log_event() for each format, move implementation from
+	// log-tpm2.c here to get rid of all ifdefs
 #if !CONFIG(TPM_LOG_TPM2)
 	int i;
 	struct tcpa_table *tclt = tcpa_log_init();
