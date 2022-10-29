@@ -630,10 +630,30 @@ int tis_init(void)
 }
 
 /*
+ * tis_close()
+ *
+ * terminate the current session with the TPM by releasing the locked
+ * locality. Returns 0 on success of TPM_DRIVER_ERR on failure (in case lock
+ * removal did not succeed).
+ */
+static int tis_close(void)
+{
+	u8 locality = 0;
+	if (tis_has_access(locality)) {
+		tis_drop_access(locality);
+		if (tis_wait_dropped_access(locality)) {
+			printf("%s:%d - failed to release locality %u\n",
+			       __FILE__, __LINE__, locality);
+			return TPM_DRIVER_ERR;
+		}
+	}
+	return 0;
+}
+
+/*
  * tis_open()
  *
- * Requests access to locality 0 for the caller. After all commands have been
- * completed the caller is supposed to call tis_close().
+ * Requests access to locality 0 for the caller.
  *
  * Returns 0 on success, TPM_DRIVER_ERR on failure.
  */
@@ -660,27 +680,6 @@ int tis_open(void)
 	if (tis_command_ready(locality) == TPM_TIMEOUT_ERR)
 		return TPM_DRIVER_ERR;
 
-	return 0;
-}
-
-/*
- * tis_close()
- *
- * terminate the current session with the TPM by releasing the locked
- * locality. Returns 0 on success of TPM_DRIVER_ERR on failure (in case lock
- * removal did not succeed).
- */
-int tis_close(void)
-{
-	u8 locality = 0;
-	if (tis_has_access(locality)) {
-		tis_drop_access(locality);
-		if (tis_wait_dropped_access(locality)) {
-			printf("%s:%d - failed to release locality %u\n",
-			       __FILE__, __LINE__, locality);
-			return TPM_DRIVER_ERR;
-		}
-	}
 	return 0;
 }
 
