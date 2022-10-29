@@ -24,6 +24,8 @@
 #include <console/console.h>
 #define VBDEBUG(format, args...) printk(BIOS_DEBUG, format, ## args)
 
+static tis_sendrecv_fn tis_sendrecv;
+
 static int tpm_send_receive(const uint8_t *request,
 				uint32_t request_length,
 				uint8_t *response,
@@ -140,19 +142,14 @@ static uint32_t send(const uint8_t *command)
 
 /* Exported functions. */
 
-static uint8_t tlcl_init_done;
-
 uint32_t tlcl_lib_init(void)
 {
-	if (tlcl_init_done)
+	if (tis_sendrecv != NULL)
 		return VB2_SUCCESS;
 
-	if (tis_init())
+	tis_sendrecv = tis_probe();
+	if (tis_sendrecv == NULL)
 		return VB2_ERROR_UNKNOWN;
-	if (tis_open())
-		return VB2_ERROR_UNKNOWN;
-
-	tlcl_init_done = 1;
 
 	return VB2_SUCCESS;
 }
