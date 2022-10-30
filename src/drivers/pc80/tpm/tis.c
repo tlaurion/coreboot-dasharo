@@ -54,6 +54,7 @@
 #define TIS_REG_STS                    0x18
 #define TIS_REG_BURST_COUNT            0x19
 #define TIS_REG_DATA_FIFO              0x24
+#define TIS_REG_INTF_ID                0x30
 #define TIS_REG_DID_VID                0xf00
 #define TIS_REG_RID                    0xf04
 
@@ -89,11 +90,11 @@
 
 /*
  * Structures defined below allow creating descriptions of TPM vendor/device
- * ID information for run time discovery. The only device the system knows
- * about at this time is Infineon slb9635
+ * ID information for run time discovery.
  */
 struct device_name {
 	u16 dev_id;
+	int tpm_family;
 	const char *const dev_name;
 };
 
@@ -104,36 +105,32 @@ struct vendor_name {
 };
 
 static const struct device_name atmel_devices[] = {
-	{0x3204, "AT97SC3204"},
+	{0x3204, 1, "AT97SC3204"},
 	{0xffff}
 };
 
 static const struct device_name infineon_devices[] = {
-	{0x000b, "SLB9635 TT 1.2"},
-#if CONFIG(TPM2)
-	{0x001a, "SLB9665 TT 2.0"},
-	{0x001b, "SLB9670 TT 2.0"},
-#else
-	{0x001a, "SLB9660 TT 1.2"},
-	{0x001b, "SLB9670 TT 1.2"},
-#endif
+	{0x000b, 1, "SLB9635 TT 1.2"},
+	{0x001a, 1, "SLB9660 TT 1.2"},
+	{0x001b, 1, "SLB9670 TT 1.2"},
+	{0x001a, 2, "SLB9665 TT 2.0"},
+	{0x001b, 2, "SLB9670 TT 2.0"},
 	{0xffff}
 };
 
 static const struct device_name nuvoton_devices[] = {
-	{0x00fe, "NPCT420AA V2"},
+	{0x00fe, 1, "NPCT420AA V2"},
 	{0xffff}
 };
 
 static const struct device_name stmicro_devices[] = {
-	{0x0000, "ST33ZP24" },
+	{0x0000, 1, "ST33ZP24" },
 	{0xffff}
 };
 
 static const struct device_name swtpm_devices[] = {
-#if CONFIG(TPM2)
-	{0x0001, "SwTPM 2.0" },
-#endif
+	{0x0001, 1, "SwTPM 1.2" },
+	{0x0001, 2, "SwTPM 2.0" },
 	{0xffff}
 };
 
@@ -197,6 +194,13 @@ static inline void tpm_write_access(u8 data, int locality)
 {
 	TPM_DEBUG_IO_WRITE(TIS_REG_ACCESS, data);
 	write8(TIS_REG(locality, TIS_REG_ACCESS), data);
+}
+
+static inline u32 tpm_read_intf_id(int locality)
+{
+	u32 value = read32(TIS_REG(locality, TIS_REG_INTF_ID));
+	TPM_DEBUG_IO_READ(TIS_REG_INTF_ID, value);
+	return value;
 }
 
 static inline u32 tpm_read_did_vid(int locality)
@@ -387,9 +391,9 @@ static u32 pc80_tis_probe(void)
 	const char *device_name = "unknown";
 	const char *vendor_name = device_name;
 	const struct device_name *dev;
-	u32 didvid;
+	u32 didvid, intf_id;
 	u16 vid, did;
-	int i;
+	int i, tpm_family;
 
 	if (vendor_dev_id)
 		return 0;  /* Already probed. */
@@ -400,21 +404,23 @@ static u32 pc80_tis_probe(void)
 		return TPM_DRIVER_ERR;
 	}
 
+	intf_id = be32_to_cpu(tpm_read_intf_id(0));
+	tpm_family = ((intf_id & 0xf) == 0xf ? 1 : 2);
+
 	vendor_dev_id = didvid;
 
 	vid = didvid & 0xffff;
 	did = (didvid >> 16) & 0xffff;
 	for (i = 0; i < ARRAY_SIZE(vendor_names); i++) {
 		int j = 0;
-		u16 known_did;
 		if (vid == vendor_names[i].vendor_id) {
 			vendor_name = vendor_names[i].vendor_name;
 		} else {
 			continue;
 		}
 		dev = &vendor_names[i].dev_names[j];
-		while ((known_did = dev->dev_id) != 0xffff) {
-			if (known_did == did) {
+		while (dev->dev_id != 0xffff) {
+			if (dev->dev_id == did && dev->tpm_family == tpm_family) {
 				device_name = dev->dev_name;
 				break;
 			}
@@ -423,8 +429,19 @@ static u32 pc80_tis_probe(void)
 		}
 		break;
 	}
-	/* this will have to be converted into debug printout */
-	printk(BIOS_INFO, "Found TPM %s by %s\n", device_name, vendor_name);
+
+	if (strcmp(vendor_name, "unknown") == 0) {
+		printk(BIOS_INFO, "Found unsupported TPM 0x%04x by 0x%04x\n", did, vid);
+		return TPM_DRIVER_ERR;
+	}
+	if (strcmp(device_name, "unknown") == 0) {
+		printk(BIOS_INFO, "Found unsupported TPM device (0x%04x) by %s (0x%04x)\n", did,
+		       vendor_name, vid);
+		return TPM_DRIVER_ERR;
+	}
+
+	printk(BIOS_INFO, "Found TPM %d %s (0x%04x) by %s (0x%04x)\n", tpm_family, device_name,
+	       did, vendor_name, vid);
 	return 0;
 }
 
