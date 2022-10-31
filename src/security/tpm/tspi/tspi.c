@@ -17,7 +17,7 @@ static uint32_t tpm1_invoke_state_machine(void)
 	uint32_t result = TPM_SUCCESS;
 
 	/* Check that the TPM is enabled and activated. */
-	result = tlcl_get_flags(&disabled, &deactivated, NULL);
+	result = tlcl12_get_flags(&disabled, &deactivated, NULL);
 	if (result != TPM_SUCCESS) {
 		printk(BIOS_ERR, "TPM: Can't read capabilities.\n");
 		return result;
@@ -26,7 +26,7 @@ static uint32_t tpm1_invoke_state_machine(void)
 	if (disabled) {
 		printk(BIOS_INFO, "TPM: is disabled. Enabling...\n");
 
-		result = tlcl_set_enable();
+		result = tlcl12_set_enable();
 		if (result != TPM_SUCCESS) {
 			printk(BIOS_ERR, "TPM: Can't set enabled state.\n");
 			return result;
@@ -36,7 +36,7 @@ static uint32_t tpm1_invoke_state_machine(void)
 	if (!!deactivated != CONFIG(TPM_DEACTIVATE)) {
 		printk(BIOS_INFO,
 		       "TPM: Unexpected TPM deactivated state. Toggling...\n");
-		result = tlcl_set_deactivated(!deactivated);
+		result = tlcl12_set_deactivated(!deactivated);
 		if (result != TPM_SUCCESS) {
 			printk(BIOS_ERR,
 			       "TPM: Can't toggle deactivated state.\n");
@@ -201,13 +201,13 @@ uint32_t tpm_clear_and_reenable(void)
 	}
 
 #if CONFIG(TPM1)
-	result = tlcl_set_enable();
+	result = tlcl12_set_enable();
 	if (result != TPM_SUCCESS) {
 		printk(BIOS_ERR, "TPM: Can't set enabled state.\n");
 		return result;
 	}
 
-	result = tlcl_set_deactivated(0);
+	result = tlcl12_set_deactivated(0);
 	if (result != TPM_SUCCESS) {
 		printk(BIOS_ERR, "TPM: Can't set deactivated state.\n");
 		return result;

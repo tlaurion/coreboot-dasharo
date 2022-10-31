@@ -216,8 +216,7 @@ static uint32_t define_space(const char *name, uint32_t index, uint32_t length,
 {
 	uint32_t rv;
 
-	rv = tlcl_define_space(index, length, nv_attributes, nv_policy,
-			       nv_policy_size);
+	rv = tlcl2_define_space(index, length, nv_attributes, nv_policy, nv_policy_size);
 	if (rv == TPM_E_NV_DEFINED) {
 		/*
 		 * Continue with writing: it may be defined, but not written
@@ -509,10 +508,10 @@ static uint32_t safe_write(uint32_t index, const void *data, uint32_t length)
  */
 static uint32_t safe_define_space(uint32_t index, uint32_t perm, uint32_t size)
 {
-	uint32_t result = tlcl_define_space(index, perm, size);
+	uint32_t result = tlcl12_define_space(index, perm, size);
 	if (result == TPM_E_MAXNVWRITES) {
 		RETURN_ON_FAILURE(tpm_clear_and_reenable());
-		return tlcl_define_space(index, perm, size);
+		return tlcl12_define_space(index, perm, size);
 	} else {
 		return result;
 	}

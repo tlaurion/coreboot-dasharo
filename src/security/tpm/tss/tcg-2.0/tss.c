@@ -7,6 +7,7 @@
 #include <security/tpm/tis.h>
 #include <security/tpm/tss.h>
 
+#include "tss.h"
 #include "tss_structures.h"
 #include "tss_marshaling.h"
 
@@ -18,7 +19,7 @@
 
 static tis_sendrecv_fn tis_sendrecv;
 
-void *tpm_process_command(TPM_CC command, void *command_body)
+void *tlcl2_process_command(TPM_CC command, void *command_body)
 {
 	struct obuf ob;
 	struct ibuf ib;
@@ -48,13 +49,13 @@ void *tpm_process_command(TPM_CC command, void *command_body)
 	return tpm_unmarshal_response(command, &ib);
 }
 
-static uint32_t tlcl_send_startup(TPM_SU type)
+static uint32_t tlcl2_send_startup(TPM_SU type)
 {
 	struct tpm2_startup startup;
 	struct tpm2_response *response;
 
 	startup.startup_type = type;
-	response = tpm_process_command(TPM2_Startup, &startup);
+	response = tlcl2_process_command(TPM2_Startup, &startup);
 
 	/* IO error, tpm2_response pointer is empty. */
 	if (!response) {
@@ -77,18 +78,18 @@ static uint32_t tlcl_send_startup(TPM_SU type)
 	return TPM_E_IOERROR;
 }
 
-uint32_t tlcl_resume(void)
+uint32_t tlcl2_resume(void)
 {
-	return tlcl_send_startup(TPM_SU_STATE);
+	return tlcl2_send_startup(TPM_SU_STATE);
 }
 
-static uint32_t tlcl_send_shutdown(TPM_SU type)
+static uint32_t tlcl2_send_shutdown(TPM_SU type)
 {
 	struct tpm2_shutdown shutdown;
 	struct tpm2_response *response;
 
 	shutdown.shutdown_type = type;
-	response = tpm_process_command(TPM2_Shutdown, &shutdown);
+	response = tlcl2_process_command(TPM2_Shutdown, &shutdown);
 
 	/* IO error, tpm2_response pointer is empty. */
 	if (!response) {
@@ -106,12 +107,12 @@ static uint32_t tlcl_send_shutdown(TPM_SU type)
 	return TPM_E_IOERROR;
 }
 
-uint32_t tlcl_save_state(void)
+uint32_t tlcl2_save_state(void)
 {
-	return tlcl_send_shutdown(TPM_SU_STATE);
+	return tlcl2_send_shutdown(TPM_SU_STATE);
 }
 
-uint32_t tlcl_assert_physical_presence(void)
+uint32_t tlcl2_assert_physical_presence(void)
 {
 	/*
 	 * Nothing to do on TPM2 for this, use platform hierarchy availability
@@ -124,8 +125,7 @@ uint32_t tlcl_assert_physical_presence(void)
  * The caller will provide the digest in a 32 byte buffer, let's consider it a
  * sha256 digest.
  */
-uint32_t tlcl_extend(int pcr_num, const uint8_t *in_digest,
-		     uint8_t *out_digest)
+uint32_t tlcl2_extend(int pcr_num, const uint8_t *in_digest, uint8_t *out_digest)
 {
 	struct tpm2_pcr_extend_cmd pcr_ext_cmd;
 	struct tpm2_response *response;
@@ -136,7 +136,7 @@ uint32_t tlcl_extend(int pcr_num, const uint8_t *in_digest,
 	memcpy(pcr_ext_cmd.digests.digests[0].digest.sha256, in_digest,
 	       sizeof(pcr_ext_cmd.digests.digests[0].digest.sha256));
 
-	response = tpm_process_command(TPM2_PCR_Extend, &pcr_ext_cmd);
+	response = tlcl2_process_command(TPM2_PCR_Extend, &pcr_ext_cmd);
 
 	printk(BIOS_INFO, "%s: response is %x\n",
 	       __func__, response ? response->hdr.tpm_code : -1);
@@ -146,18 +146,18 @@ uint32_t tlcl_extend(int pcr_num, const uint8_t *in_digest,
 	return TPM_SUCCESS;
 }
 
-uint32_t tlcl_finalize_physical_presence(void)
+uint32_t tlcl2_finalize_physical_presence(void)
 {
 	/* Nothing needs to be done with tpm2. */
 	printk(BIOS_INFO, "%s:%s:%d\n", __FILE__, __func__, __LINE__);
 	return TPM_SUCCESS;
 }
 
-uint32_t tlcl_force_clear(void)
+uint32_t tlcl2_force_clear(void)
 {
 	struct tpm2_response *response;
 
-	response = tpm_process_command(TPM2_Clear, NULL);
+	response = tlcl2_process_command(TPM2_Clear, NULL);
 	printk(BIOS_INFO, "%s: response is %x\n",
 	       __func__, response ? response->hdr.tpm_code : -1);
 
@@ -167,14 +167,14 @@ uint32_t tlcl_force_clear(void)
 	return TPM_SUCCESS;
 }
 
-uint32_t tlcl_clear_control(bool disable)
+uint32_t tlcl2_clear_control(bool disable)
 {
 	struct tpm2_response *response;
 	struct tpm2_clear_control_cmd cc = {
 		.disable = 0,
 	};
 
-	response = tpm_process_command(TPM2_ClearControl, &cc);
+	response = tlcl2_process_command(TPM2_ClearControl, &cc);
 	printk(BIOS_INFO, "%s: response is %x\n",
 		__func__, response ? response->hdr.tpm_code : -1);
 
@@ -184,37 +184,18 @@ uint32_t tlcl_clear_control(bool disable)
 	return TPM_SUCCESS;
 }
 
-/* This function is called directly by vboot, uses vboot return types. */
-uint32_t tlcl_lib_init(void)
+void tlcl2_lib_init(tis_sendrecv_fn sendrecv)
 {
-	int tpm_family;
-
-	if (tis_sendrecv != NULL)
-		return VB2_SUCCESS;
-
-	tis_sendrecv = tis_probe(&tpm_family);
-	if (tis_sendrecv == NULL) {
-		printk(BIOS_ERR, "%s: tis_probe returned error\n", __func__);
-		return VB2_ERROR_UNKNOWN;
-	}
-
-	if (tpm_family != 2) {
-		tis_sendrecv = NULL;
-		printk(BIOS_ERR, "%s: tis_probe returned unsupported TPM family: %d\n",
-		       __func__, tpm_family);
-		return VB2_ERROR_UNKNOWN;
-	}
-
-	return VB2_SUCCESS;
+	tis_sendrecv = sendrecv;
 }
 
-uint32_t tlcl_physical_presence_cmd_enable(void)
+uint32_t tlcl2_physical_presence_cmd_enable(void)
 {
 	printk(BIOS_INFO, "%s:%s:%d\n", __FILE__, __func__, __LINE__);
 	return TPM_SUCCESS;
 }
 
-uint32_t tlcl_read(uint32_t index, void *data, uint32_t length)
+uint32_t tlcl2_read(uint32_t index, void *data, uint32_t length)
 {
 	struct tpm2_nv_read_cmd nv_readc;
 	struct tpm2_response *response;
@@ -224,7 +205,7 @@ uint32_t tlcl_read(uint32_t index, void *data, uint32_t length)
 	nv_readc.nvIndex = HR_NV_INDEX + index;
 	nv_readc.size = length;
 
-	response = tpm_process_command(TPM2_NV_Read, &nv_readc);
+	response = tlcl2_process_command(TPM2_NV_Read, &nv_readc);
 
 	/* Need to map tpm error codes into internal values. */
 	if (!response)
@@ -263,20 +244,20 @@ uint32_t tlcl_read(uint32_t index, void *data, uint32_t length)
 	return TPM_SUCCESS;
 }
 
-uint32_t tlcl_self_test_full(void)
+uint32_t tlcl2_self_test_full(void)
 {
 	struct tpm2_self_test st;
 	struct tpm2_response *response;
 
 	st.yes_no = 1;
 
-	response = tpm_process_command(TPM2_SelfTest, &st);
+	response = tlcl2_process_command(TPM2_SelfTest, &st);
 	printk(BIOS_INFO, "%s: response is %x\n",
 	       __func__, response ? response->hdr.tpm_code : -1);
 	return TPM_SUCCESS;
 }
 
-uint32_t tlcl_lock_nv_write(uint32_t index)
+uint32_t tlcl2_lock_nv_write(uint32_t index)
 {
 	struct tpm2_response *response;
 	/* TPM Will reject attempts to write at non-defined index. */
@@ -284,7 +265,7 @@ uint32_t tlcl_lock_nv_write(uint32_t index)
 		.nvIndex = HR_NV_INDEX + index,
 	};
 
-	response = tpm_process_command(TPM2_NV_WriteLock, &nv_wl);
+	response = tlcl2_process_command(TPM2_NV_WriteLock, &nv_wl);
 
 	printk(BIOS_INFO, "%s: response is %x\n",
 	       __func__, response ? response->hdr.tpm_code : -1);
@@ -295,12 +276,12 @@ uint32_t tlcl_lock_nv_write(uint32_t index)
 	return TPM_SUCCESS;
 }
 
-uint32_t tlcl_startup(void)
+uint32_t tlcl2_startup(void)
 {
-	return tlcl_send_startup(TPM_SU_CLEAR);
+	return tlcl2_send_startup(TPM_SU_CLEAR);
 }
 
-uint32_t tlcl_write(uint32_t index, const void *data, uint32_t length)
+uint32_t tlcl2_write(uint32_t index, const void *data, uint32_t length)
 {
 	struct tpm2_nv_write_cmd nv_writec;
 	struct tpm2_response *response;
@@ -311,7 +292,7 @@ uint32_t tlcl_write(uint32_t index, const void *data, uint32_t length)
 	nv_writec.data.t.size = length;
 	nv_writec.data.t.buffer = data;
 
-	response = tpm_process_command(TPM2_NV_Write, &nv_writec);
+	response = tlcl2_process_command(TPM2_NV_Write, &nv_writec);
 
 	printk(BIOS_INFO, "%s: response is %x\n",
 	       __func__, response ? response->hdr.tpm_code : -1);
@@ -323,7 +304,7 @@ uint32_t tlcl_write(uint32_t index, const void *data, uint32_t length)
 	return TPM_SUCCESS;
 }
 
-uint32_t tlcl_set_bits(uint32_t index, uint64_t bits)
+uint32_t tlcl2_set_bits(uint32_t index, uint64_t bits)
 {
 	struct tpm2_nv_setbits_cmd nvsb_cmd;
 	struct tpm2_response *response;
@@ -334,7 +315,7 @@ uint32_t tlcl_set_bits(uint32_t index, uint64_t bits)
 	nvsb_cmd.nvIndex = HR_NV_INDEX + index;
 	nvsb_cmd.bits = bits;
 
-	response = tpm_process_command(TPM2_NV_SetBits, &nvsb_cmd);
+	response = tlcl2_process_command(TPM2_NV_SetBits, &nvsb_cmd);
 
 	printk(BIOS_INFO, "%s: response is %x\n",
 	       __func__, response ? response->hdr.tpm_code : -1);
@@ -346,9 +327,9 @@ uint32_t tlcl_set_bits(uint32_t index, uint64_t bits)
 	return TPM_SUCCESS;
 }
 
-uint32_t tlcl_define_space(uint32_t space_index, size_t space_size,
-			   const TPMA_NV nv_attributes,
-			   const uint8_t *nv_policy, size_t nv_policy_size)
+uint32_t tlcl2_define_space(uint32_t space_index, size_t space_size,
+			    const TPMA_NV nv_attributes,
+			    const uint8_t *nv_policy, size_t nv_policy_size)
 {
 	struct tpm2_nv_define_space_cmd nvds_cmd;
 	struct tpm2_response *response;
@@ -371,7 +352,7 @@ uint32_t tlcl_define_space(uint32_t space_index, size_t space_size,
 		nvds_cmd.publicInfo.authPolicy.t.size = nv_policy_size;
 	}
 
-	response = tpm_process_command(TPM2_NV_DefineSpace, &nvds_cmd);
+	response = tlcl2_process_command(TPM2_NV_DefineSpace, &nvds_cmd);
 	printk(BIOS_INFO, "%s: response is %x\n", __func__,
 	       response ? response->hdr.tpm_code : -1);
 
@@ -389,7 +370,7 @@ uint32_t tlcl_define_space(uint32_t space_index, size_t space_size,
 	}
 }
 
-uint16_t tlcl_get_hash_size_from_algo(TPMI_ALG_HASH hash_algo)
+uint16_t tlcl2_get_hash_size_from_algo(TPMI_ALG_HASH hash_algo)
 {
 	uint16_t value;
 
@@ -421,7 +402,7 @@ uint16_t tlcl_get_hash_size_from_algo(TPMI_ALG_HASH hash_algo)
 	return value;
 }
 
-uint32_t tlcl_disable_platform_hierarchy(void)
+uint32_t tlcl2_disable_platform_hierarchy(void)
 {
 	struct tpm2_response *response;
 	struct tpm2_hierarchy_control_cmd hc = {
@@ -429,7 +410,7 @@ uint32_t tlcl_disable_platform_hierarchy(void)
 		.state = 0,
 	};
 
-	response = tpm_process_command(TPM2_Hierarchy_Control, &hc);
+	response = tlcl2_process_command(TPM2_Hierarchy_Control, &hc);
 
 	if (!response || response->hdr.tpm_code)
 		return TPM_E_INTERNAL_INCONSISTENCY;
@@ -437,9 +418,9 @@ uint32_t tlcl_disable_platform_hierarchy(void)
 	return TPM_SUCCESS;
 }
 
-uint32_t tlcl_get_capability(TPM_CAP capability, uint32_t property,
-		uint32_t property_count,
-		TPMS_CAPABILITY_DATA *capability_data)
+uint32_t tlcl2_get_capability(TPM_CAP capability, uint32_t property,
+			      uint32_t property_count,
+			      TPMS_CAPABILITY_DATA *capability_data)
 {
 	struct tpm2_get_capability cmd;
 	struct tpm2_response *response;
@@ -454,7 +435,7 @@ uint32_t tlcl_get_capability(TPM_CAP capability, uint32_t property,
 		return TPM_E_IOERROR;
 	}
 
-	response = tpm_process_command(TPM2_GetCapability, &cmd);
+	response = tlcl2_process_command(TPM2_GetCapability, &cmd);
 
 	if (!response) {
 		printk(BIOS_ERR, "%s: Command Failed\n", __func__);
