@@ -386,14 +386,14 @@ static int tis_command_ready(u8 locality)
  * Returns 0 on success (the device is found or was found during an earlier
  * invocation) or TPM_DRIVER_ERR if the device is not found.
  */
-static u32 pc80_tis_probe(void)
+static u32 pc80_tis_probe(int *tpm_family)
 {
 	const char *device_name = "unknown";
 	const char *vendor_name = device_name;
 	const struct device_name *dev;
 	u32 didvid, intf_id;
 	u16 vid, did;
-	int i, tpm_family;
+	int i;
 
 	if (vendor_dev_id)
 		return 0;  /* Already probed. */
@@ -405,7 +405,7 @@ static u32 pc80_tis_probe(void)
 	}
 
 	intf_id = be32_to_cpu(tpm_read_intf_id(0));
-	tpm_family = ((intf_id & 0xf) == 0xf ? 1 : 2);
+	*tpm_family = ((intf_id & 0xf) == 0xf ? 1 : 2);
 
 	vendor_dev_id = didvid;
 
@@ -420,7 +420,7 @@ static u32 pc80_tis_probe(void)
 		}
 		dev = &vendor_names[i].dev_names[j];
 		while (dev->dev_id != 0xffff) {
-			if (dev->dev_id == did && dev->tpm_family == tpm_family) {
+			if (dev->dev_id == did && dev->tpm_family == *tpm_family) {
 				device_name = dev->dev_name;
 				break;
 			}
@@ -440,7 +440,7 @@ static u32 pc80_tis_probe(void)
 		return TPM_DRIVER_ERR;
 	}
 
-	printk(BIOS_INFO, "Found TPM %d %s (0x%04x) by %s (0x%04x)\n", tpm_family, device_name,
+	printk(BIOS_INFO, "Found TPM %d %s (0x%04x) by %s (0x%04x)\n", *tpm_family, device_name,
 	       did, vendor_name, vid);
 	return 0;
 }
@@ -709,12 +709,15 @@ static int pc80_tpm_sendrecv(const uint8_t *sendbuf, size_t send_size,
 /*
  * tis_probe()
  *
- * Probe for the TPM device and set it up for use within locality 0. Returns
- * pointer to send-receive function on success or NULL on failure.
+ * Probe for the TPM device and set it up for use within locality 0.
+ *
+ * @tpm_family - pointer to int which is set to TPM family of the device (1 or 2)
+ *
+ * Returns pointer to send-receive function on success or NULL on failure.
  */
-tis_sendrecv_fn tis_probe(void)
+tis_sendrecv_fn tis_probe(int *tpm_family)
 {
-	if (pc80_tis_probe())
+	if (pc80_tis_probe(tpm_family))
 		return NULL;
 
 	if (pc80_tis_open())

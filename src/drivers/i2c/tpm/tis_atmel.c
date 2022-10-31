@@ -103,7 +103,8 @@ static int i2c_tis_sendrecv(const uint8_t *sendbuf, size_t sbuf_size,
 	return 0;
 }
 
-tis_sendrecv_fn tis_probe(void)
+tis_sendrecv_fn tis_probe(int *tpm_family)
 {
+	*tpm_family = 1;
 	return &i2c_tis_sendrecv;
 }

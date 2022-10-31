@@ -50,10 +50,13 @@ typedef int (*tis_sendrecv_fn)(const u8 *sendbuf, size_t send_size, u8 *recvbuf,
 /*
  * tis_probe()
  *
- * Probe for the TPM device and set it up for use within locality 0. Returns
- * pointer to send-receive function on success or NULL on failure.
+ * Probe for the TPM device and set it up for use within locality 0.
+ *
+ * @tpm_family - pointer to int which is set to TPM family of the device (1 or 2)
+ *
+ * Returns pointer to send-receive function on success or NULL on failure.
  */
-tis_sendrecv_fn tis_probe(void);
+tis_sendrecv_fn tis_probe(int *tpm_family);
 
 /* TODO: This is supposed to be used only for Google TPM.
    Consider moving this to drivers/tpm/cr50.h. */

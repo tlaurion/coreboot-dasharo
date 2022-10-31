@@ -187,12 +187,21 @@ uint32_t tlcl_clear_control(bool disable)
 /* This function is called directly by vboot, uses vboot return types. */
 uint32_t tlcl_lib_init(void)
 {
+	int tpm_family;
+
 	if (tis_sendrecv != NULL)
 		return VB2_SUCCESS;
 
-	tis_sendrecv = tis_probe();
+	tis_sendrecv = tis_probe(&tpm_family);
 	if (tis_sendrecv == NULL) {
 		printk(BIOS_ERR, "%s: tis_probe returned error\n", __func__);
+		return VB2_ERROR_UNKNOWN;
+	}
+
+	if (tpm_family != 2) {
+		tis_sendrecv = NULL;
+		printk(BIOS_ERR, "%s: tis_probe returned unsupported TPM family: %d\n",
+		       __func__, tpm_family);
 		return VB2_ERROR_UNKNOWN;
 	}
 

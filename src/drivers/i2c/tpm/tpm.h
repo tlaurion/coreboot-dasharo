@@ -51,7 +51,7 @@ struct tpm_chip {
 
 /* ---------- Interface for TPM vendor ------------ */
 
-int tpm_vendor_probe(unsigned int bus, uint32_t addr);
+int tpm_vendor_probe(unsigned int bus, uint32_t addr, int *tpm_family);
 
 int tpm_vendor_init(struct tpm_chip *chip, unsigned int bus, uint32_t dev_addr);
 

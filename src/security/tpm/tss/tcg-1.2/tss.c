@@ -144,12 +144,19 @@ static uint32_t send(const uint8_t *command)
 
 uint32_t tlcl_lib_init(void)
 {
+	int tpm_family;
+
 	if (tis_sendrecv != NULL)
 		return VB2_SUCCESS;
 
-	tis_sendrecv = tis_probe();
+	tis_sendrecv = tis_probe(&tpm_family);
 	if (tis_sendrecv == NULL)
 		return VB2_ERROR_UNKNOWN;
+
+	if (tpm_family != 1) {
+		tis_sendrecv = NULL;
+		return VB2_ERROR_UNKNOWN;
+	}
 
 	return VB2_SUCCESS;
 }

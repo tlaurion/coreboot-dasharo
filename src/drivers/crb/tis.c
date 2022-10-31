@@ -46,9 +46,11 @@ static int crb_tpm_sendrecv(const uint8_t *sendbuf, size_t sbuf_size, uint8_t *r
 	return 0;
 }
 
-tis_sendrecv_fn tis_probe(void)
+tis_sendrecv_fn tis_probe(int *tpm_family)
 {
 	struct tpm2_info info;
+
+	*tpm_family = 2;
 
 	/* Wake TPM up (if necessary) */
 	if (tpm2_init() != 0)

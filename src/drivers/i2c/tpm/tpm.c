@@ -451,12 +451,14 @@ out_err:
 
 /* Initialization of I2C TPM */
 
-int tpm_vendor_probe(unsigned int bus, uint32_t addr)
+int tpm_vendor_probe(unsigned int bus, uint32_t addr, int *tpm_family)
 {
 	struct stopwatch sw;
 	uint8_t buf = 0;
 	int ret;
 	long sw_run_duration = SLEEP_DURATION_PROBE_MS;
+
+	*tpm_family = 1;
 
 	tpm_dev.chip_type = UNKNOWN;
 	tpm_dev.bus = bus;
