@@ -48,15 +48,13 @@ typedef int (*tis_sendrecv_fn)(const u8 *sendbuf, size_t send_size, u8 *recvbuf,
 			       size_t *recv_len);
 
 /*
- * tis_probe()
- *
  * Probe for the TPM device and set it up for use within locality 0.
  *
  * @tpm_family - pointer to int which is set to TPM family of the device (1 or 2)
  *
  * Returns pointer to send-receive function on success or NULL on failure.
  */
-tis_sendrecv_fn tis_probe(int *tpm_family);
+typedef tis_sendrecv_fn (*tis_probe_fn)(int *tpm_family);
 
 /* TODO: This is supposed to be used only for Google TPM.
    Consider moving this to drivers/tpm/cr50.h. */
@@ -99,5 +97,12 @@ static inline bool tpm_first_access_this_boot(void)
 {
 	return ENV_SEPARATE_VERSTAGE || ENV_BOOTBLOCK || !CONFIG(VBOOT);
 }
+
+#define __tis_driver __attribute__((used, __section__(".rodata.tis_driver")))
+
+/** start of compile time generated tis driver array */
+extern tis_probe_fn _tis_drivers[];
+/** end of compile time generated tis driver array */
+extern tis_probe_fn _etis_drivers[];
 
 #endif /* TIS_H_ */

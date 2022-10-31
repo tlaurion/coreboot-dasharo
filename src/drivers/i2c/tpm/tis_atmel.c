@@ -103,8 +103,10 @@ static int i2c_tis_sendrecv(const uint8_t *sendbuf, size_t sbuf_size,
 	return 0;
 }
 
-tis_sendrecv_fn tis_probe(int *tpm_family)
+static tis_sendrecv_fn atmel_i2c_tis_probe(int *tpm_family)
 {
 	*tpm_family = 1;
 	return &i2c_tis_sendrecv;
 }
+
+static const __tis_driver tis_probe_fn atmel_i2c_tis_driver = atmel_i2c_tis_probe;

@@ -18,12 +18,19 @@ static int tpm_family;
 /* Probe for TPM device and chose implementation based on the returned TPM family. */
 uint32_t tlcl_lib_init(void)
 {
+	tis_probe_fn *tis_probe;
 	tis_sendrecv_fn tis_sendrecv;
 
 	if (tpm_family != 0)
 		return VB2_SUCCESS;
 
-	tis_sendrecv = tis_probe(&tpm_family);
+	tis_sendrecv = NULL;
+	for (tis_probe = _tis_drivers; tis_probe != _etis_drivers; tis_probe++) {
+		tis_sendrecv = (*tis_probe)(&tpm_family);
+		if (tis_sendrecv != NULL)
+			break;
+	}
+
 	if (tis_sendrecv == NULL) {
 		printk(BIOS_ERR, "%s: tis_probe returned error\n", __func__);
 		return VB2_ERROR_UNKNOWN;

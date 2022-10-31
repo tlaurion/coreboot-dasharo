@@ -119,7 +119,7 @@ static int i2c_tpm_sendrecv(const uint8_t *sendbuf, size_t sbuf_size,
 	return 0;
 }
 
-tis_sendrecv_fn tis_probe(int *tpm_family)
+static tis_sendrecv_fn i2c_tis_probe(int *tpm_family)
 {
 	if (tpm_vendor_probe(CONFIG_DRIVER_TPM_I2C_BUS, CONFIG_DRIVER_TPM_I2C_ADDR, tpm_family))
 		return NULL;
@@ -136,3 +136,5 @@ tis_sendrecv_fn tis_probe(int *tpm_family)
 
 	return &i2c_tpm_sendrecv;
 }
+
+static const __tis_driver tis_probe_fn i2c_tis_driver = i2c_tis_probe;

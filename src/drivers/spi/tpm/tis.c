@@ -40,7 +40,7 @@ static int tpm_sendrecv(const uint8_t *sendbuf, size_t sbuf_size,
 	return 0;
 }
 
-tis_sendrecv_fn tis_probe(int *tpm_family)
+static tis_sendrecv_fn spi_tis_probe(int *tpm_family)
 {
 	struct spi_slave spi;
 	struct tpm2_info info;
@@ -65,3 +65,5 @@ tis_sendrecv_fn tis_probe(int *tpm_family)
 
 	return &tpm_sendrecv;
 }
+
+static const __tis_driver tis_probe_fn spi_tis_driver = spi_tis_probe;
