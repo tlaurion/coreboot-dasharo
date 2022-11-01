@@ -140,6 +140,9 @@ static int smbios_write_type43_tpm(struct device *dev, int *handle, unsigned lon
 	uint32_t fw_ver1, fw_ver2;
 	uint8_t major_spec_ver, minor_spec_ver;
 
+	if (tlcl_get_family() == 1)
+		return get_smbios_data(dev, handle, current);
+
 	tpm2_get_info(&info);
 
 	/* If any of these have invalid values, assume TPM not present or disabled */

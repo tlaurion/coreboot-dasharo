@@ -20,6 +20,7 @@
 #include <device/device.h>
 #include <console/console.h>
 #include <security/tpm/tis.h>
+#include <security/tpm/tss.h>
 #include <device/pnp.h>
 #include <drivers/tpm/tpm_ppi.h>
 #include <timer.h>
@@ -803,7 +804,7 @@ static void lpc_tpm_fill_ssdt(const struct device *dev)
 	acpigen_write_scope(path);
 	acpigen_write_device(acpi_device_name(dev));
 
-	if (CONFIG(TPM2)) {
+	if (tlcl_get_family() == 2) {
 		acpigen_write_name_string("_HID", "MSFT0101");
 		acpigen_write_name_string("_CID", "MSFT0101");
 	} else {

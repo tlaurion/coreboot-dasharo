@@ -48,6 +48,11 @@ uint32_t tlcl_lib_init(void)
 	return VB2_ERROR_UNKNOWN;
 }
 
+int tlcl_get_family(void)
+{
+	return tpm_family;
+}
+
 uint32_t tlcl_startup(void)
 {
 #if CONFIG(TPM1)

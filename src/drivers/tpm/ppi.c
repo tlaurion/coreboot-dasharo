@@ -5,6 +5,7 @@
 #include <acpi/acpi_device.h>
 #include <cbmem.h>
 #include <console/console.h>
+#include <security/tpm/tss.h>
 
 #include "tpm_ppi.h"
 
@@ -62,7 +63,7 @@ static void verify_supported_ppi(uint8_t src_op)
 	acpigen_write_store();
 	acpigen_emit_namestring("^FSUP");
 	acpigen_emit_byte(LOCAL2_OP);
-	acpigen_emit_byte(CONFIG(TPM1) ? ONE_OP : ZERO_OP);
+	acpigen_emit_byte(tlcl_get_family() == 1 ? ONE_OP : ZERO_OP);
 	acpigen_emit_byte(LOCAL1_OP);
 	acpigen_write_if_lequal_op_int(LOCAL1_OP, 0);
 
@@ -84,7 +85,7 @@ static void verify_supported_ppi(uint8_t src_op)
 	acpigen_write_store();
 	acpigen_emit_namestring("^FSUP");
 	acpigen_emit_byte(LOCAL2_OP);
-	acpigen_emit_byte(CONFIG(TPM1) ? ZERO_OP : ONE_OP);
+	acpigen_emit_byte(tlcl_get_family() == 1 ? ZERO_OP : ONE_OP);
 	acpigen_emit_byte(LOCAL1_OP);
 
 	acpigen_write_if_lequal_op_int(LOCAL1_OP, 1);
@@ -114,7 +115,7 @@ static void tpm_ppi_func0_cb(void *arg)
  */
 static void tpm_ppi_func1_cb(void *arg)
 {
-	if (CONFIG(TPM2))
+	if (tlcl_get_family() == 2)
 		/* Interface version: 1.3 */
 		acpigen_write_return_string("1.3");
 	else
@@ -410,7 +411,7 @@ static void tpm_ppi_func8_cb(void *arg)
 	acpigen_write_store();
 	acpigen_emit_namestring("^FSUP");
 	acpigen_emit_byte(LOCAL2_OP);
-	acpigen_emit_byte(CONFIG(TPM1) ? ONE_OP : ZERO_OP);
+	acpigen_emit_byte(tlcl_get_family() == 1 ? ONE_OP : ZERO_OP);
 	acpigen_emit_byte(LOCAL1_OP);
 	acpigen_write_if_lequal_op_int(LOCAL1_OP, 0);
 	acpigen_write_return_byte(0);	/* Not implemented */
@@ -418,7 +419,7 @@ static void tpm_ppi_func8_cb(void *arg)
 
 	// FIXME: Only advertise supported functions
 
-	if (CONFIG(TPM1)) {
+	if (tlcl_get_family() == 1) {
 		/*
 		 * Some functions do not require PP depending on configuration.
 		 * Those aren't listed here, so the 'required PP' is always set for those.
@@ -434,7 +435,7 @@ static void tpm_ppi_func8_cb(void *arg)
 			acpigen_write_return_integer(PPI8_RET_ALLOWED);
 			acpigen_pop_len();	/* Pop : If */
 		}
-	} else if (CONFIG(TPM2)) {
+	} else if (tlcl_get_family() == 2) {
 		/*
 		 * Some functions do not require PP depending on configuration.
 		 * Those aren't listed here, so the 'required PP' is always set for those.
@@ -574,7 +575,7 @@ void tpm_ppi_acpi_fill_ssdt(const struct device *dev)
 	bool found = false;
 	/* Fill in defaults, the TPM command executor may overwrite this list */
 	memset(ppib->func, 0, sizeof(ppib->func));
-	if (CONFIG(TPM1)) {
+	if (tlcl_get_family() == 1) {
 		for (size_t i = 0; i < ARRAY_SIZE(tpm1_funcs); i++) {
 			ppib->func[tpm1_funcs[i]] = 1;
 			if (ppib->pprq == tpm1_funcs[i])
@@ -716,7 +717,7 @@ void lb_tpm_ppi(struct lb_header *header)
 	tpm_ppi->tag = LB_TAG_TPM_PPI_HANDOFF;
 	tpm_ppi->size = sizeof(*tpm_ppi);
 	tpm_ppi->ppi_address = (uintptr_t)ppib;
-	tpm_ppi->tpm_version = CONFIG(TPM1) ? LB_TPM_VERSION_TPM_VERSION_1_2 :
+	tpm_ppi->tpm_version = tlcl_get_family() == 1 ? LB_TPM_VERSION_TPM_VERSION_1_2 :
 		LB_TPM_VERSION_TPM_VERSION_2;
 
 	tpm_ppi->ppi_version = BCD(1, 3);

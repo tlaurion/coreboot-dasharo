@@ -26,6 +26,7 @@
 #include <device/mmio.h>
 #include <device/pci.h>
 #include <pc80/mc146818rtc.h>
+#include <security/tpm/tss.h>
 #include <string.h>
 #include <types.h>
 #include <version.h>
@@ -1781,7 +1782,7 @@ unsigned long write_acpi_tables(unsigned long start)
 		acpi_add_table(rsdp, mcfg);
 	}
 
-	if (CONFIG(TPM1)) {
+	if (tlcl_get_family() == 1) {
 		printk(BIOS_DEBUG, "ACPI:    * TCPA\n");
 		tcpa = (acpi_tcpa_t *) current;
 		acpi_create_tcpa(tcpa);
@@ -1792,7 +1793,7 @@ unsigned long write_acpi_tables(unsigned long start)
 		}
 	}
 
-	if (CONFIG(TPM2)) {
+	if (tlcl_get_family() == 2) {
 		printk(BIOS_DEBUG, "ACPI:    * TPM2\n");
 		tpm2 = (acpi_tpm2_t *) current;
 		acpi_create_tpm2(tpm2);

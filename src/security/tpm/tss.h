@@ -137,6 +137,11 @@ uint32_t tlcl2_disable_platform_hierarchy(void);
  */
 uint32_t tlcl_lib_init(void);
 
+/**
+ * Query active TPM family.  Returns 0 if uninitialized and 1 or 2 otherwise.
+ */
+int tlcl_get_family(void);
+
 /* Commands */
 
 /**
