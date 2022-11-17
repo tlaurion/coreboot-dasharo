@@ -322,18 +322,20 @@ cbfs-files-processor-nvramtool= \
 		mv $(2).tmp $(2))
 
 #######################################################################
-# Reduce a .config file to its minimal representation
+# Reduce a .config file by removing lines about unset booleans
 # arg1: input
 # arg2: output
-define cbfs-files-processor-defconfig
+define cbfs-files-processor-config
 	$(eval $(2): $(1) $(obj)/build.h $(objutil)/kconfig/conf; \
 		+printf "    CREATE     $(2) (from $(1))\n"; \
 		printf "# This image was built using coreboot " > $(2).tmp && \
 		grep "\<COREBOOT_VERSION\>" $(obj)/build.h |cut -d\" -f2 >> $(2).tmp && \
 		$(MAKE) DOTCONFIG=$(1) DEFCONFIG=$(2).tmp2 savedefconfig && \
 		cat $(2).tmp2 >> $(2).tmp && \
+		printf "# End of defconfig. Derivable values start here.\n" >> $(2).tmp && \
+		grep "^CONFIG" $(1) | grep -F -v -f $(2).tmp2 >> $(2).tmp && \
 		rm -f $(2).tmp2 && \
-		\mv -f $(2).tmp $(2))
+		mv -f $(2).tmp $(2))
 endef
 
 #######################################################################
@@ -1259,8 +1261,9 @@ vgaroms/seavgabios.bin-file := $(CONFIG_PAYLOAD_VGABIOS_FILE)
 vgaroms/seavgabios.bin-type := raw
 
 cbfs-files-$(CONFIG_INCLUDE_CONFIG_FILE) += config
-config-file := $(DOTCONFIG):defconfig
+config-file := $(DOTCONFIG):config
 config-type := raw
+config-compression := LZMA
 
 cbfs-files-$(CONFIG_INCLUDE_CONFIG_FILE) += revision
 revision-file := $(obj)/build.h
