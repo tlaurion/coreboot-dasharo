@@ -438,6 +438,9 @@ extern int debug;
 #define PCI_DEVICE_ID_INTEL_LEWISBURG_IE3 0xA1FC /* IE Lewisburg #3 */
 #define PCI_DEVICE_ID_INTEL_CANNONLAKE 0xA360 /* Cannon Lake */
 #define PCI_DEVICE_ID_INTEL_BAYTRAIL 0x0F18 /* Bay Trail */
+#define PCI_DEVICE_ID_INTEL_TIGERLAKE 0xA0E0 /* Tiger Lake */
+#define PCI_DEVICE_ID_INTEL_ALDERLAKE_P 0x51E0 /* Alder Lake P */
+#define PCI_DEVICE_ID_INTEL_ALDERLAKE_S 0x7AE8 /* Alder Lake S */
 
 #define PCI_DEV_HAS_SUPPORTED_ME(x) ( \
 	((x) ==  PCI_DEVICE_ID_INTEL_COUGARPOINT_1) || \
@@ -493,4 +496,7 @@ extern int debug;
 	((x) ==  PCI_DEVICE_ID_INTEL_LEWISBURG_IE3) || \
 	((x) ==  PCI_DEVICE_ID_INTEL_CANNONLAKE) || \
 	((x) ==  PCI_DEVICE_ID_INTEL_BAYTRAIL) || \
+	((x) ==  PCI_DEVICE_ID_INTEL_TIGERLAKE) || \
+	((x) ==  PCI_DEVICE_ID_INTEL_ALDERLAKE_P) || \
+	((x) ==  PCI_DEVICE_ID_INTEL_ALDERLAKE_S) || \
 	0)
