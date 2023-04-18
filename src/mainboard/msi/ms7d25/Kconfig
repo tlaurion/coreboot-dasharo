@@ -19,6 +19,9 @@ config BOARD_MSI_MS7D25
 
 if BOARD_MSI_MS7D25
 
+config IGNORE_IASL_MISSING_DEPENDENCY
+	def_bool y
+
 config MAINBOARD_DIR
 	default "msi/ms7d25"
 
