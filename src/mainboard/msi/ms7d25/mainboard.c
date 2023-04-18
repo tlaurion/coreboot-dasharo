@@ -11,6 +11,7 @@
 #include <smmstore.h>
 #include <string.h>
 #include <superio/nuvoton/nct6687d/nct6687d.h>
+#include <security/vboot/vboot_common.h>
 
 #include <Uefi/UefiBaseType.h>
 
@@ -601,7 +602,14 @@ static void mainboard_enable(struct device *dev)
 #endif
 }
 
+static void mainboard_final(void *chip_info)
+{
+	if (CONFIG(VBOOT))
+		vboot_clear_recovery_request();
+}
+
 struct chip_operations mainboard_ops = {
 	.init = mainboard_init,
 	.enable_dev = mainboard_enable,
+	.final = mainboard_final,
 };
