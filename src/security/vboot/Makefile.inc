@@ -104,10 +104,12 @@ ifeq (${CONFIG_VBOOT_MOCK_SECDATA},y)
 verstage-y += secdata_mock.c
 romstage-y += secdata_mock.c
 ramstage-y += secdata_mock.c
+postcar-y += secdata_mock.c
 else
 verstage-y += secdata_tpm.c
 romstage-y += secdata_tpm.c
 ramstage-y += secdata_tpm.c
+postcar-y += secdata_mock.c
 endif
 
 ifneq ($(CONFIG_VBOOT_NO_TPM),y)
