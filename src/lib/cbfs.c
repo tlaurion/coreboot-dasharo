@@ -493,7 +493,7 @@ void *_cbfs_alloc(const char *name, cbfs_allocator_t allocator, void *arg,
 	 * Bootblock will never have its hash due to how CBFS_VERIFICATION works.
 	 * Skip its verification to let CRTM initialization pass.
 	 */
-	if (*type == CBFS_TYPE_BOOTBLOCK)
+	if (type && (*type == CBFS_TYPE_BOOTBLOCK))
 		skip_verification = true;
 
 	void *ret = do_alloc(&mdata, &rdev, allocator, arg, size_out, skip_verification);
