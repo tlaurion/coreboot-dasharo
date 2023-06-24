@@ -499,7 +499,7 @@ static const struct pad_config gpio_table[] = {
 
 	/* GPP_D2 - GPIO */
 	/* DW0: 0x44000200, DW1: 0x00000000 */
-	PAD_CFG_GPO(GPP_D2, 0, DEEP),
+	PAD_CFG_GPO(GPP_D2, 1, DEEP),
 
 	/* GPP_D3 - GPIO */
 	/* DW0: 0x44000201, DW1: 0x00000000 */
